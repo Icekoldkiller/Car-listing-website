@@ -1,0 +1,15 @@
+{% extends "layout.html" %}
+{% block content %}
+<h2>Add New Car</h2>
+<form method="POST" enctype="multipart/form-data" class="form">
+    <input type="text" name="model" placeholder="Car Model" required>
+    <input type="text" name="mileage" placeholder="Mileage" required>
+    <input type="number" name="year" placeholder="Year of Manufacture" required>
+    <input type="text" name="brand" placeholder="Car Brand" required>
+    <input type="text" name="fuel" placeholder="Fuel Type" required>
+    <input type="text" name="condition" placeholder="Condition" required>
+    <input type="number" step="0.01" name="price" placeholder="Price (USD)" required>
+    <input type="file" name="image" required>   
+    <button type="submit">Add Car</button>
+</form>
+{% endblock %}

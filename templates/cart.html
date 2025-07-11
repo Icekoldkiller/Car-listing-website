@@ -1,0 +1,26 @@
+{% extends "layout.html" %}
+{% block content %}
+<h2>Your Cart</h2>
+
+{% if cars %}
+    <div class="car-list">
+        {% for car in cars %}
+        <div class="car-card">
+            <img src="{{ url_for('static', filename='images/' + car.image) }}" alt="Car Image">
+            <div class="details">
+                <h2>{{ car.brand }} {{ car.model }}</h2>
+                <p><strong>Mileage:</strong> {{ car.mileage }}</p>
+                <p><strong>Year:</strong> {{ car.year }}</p>
+                <p><strong>Fuel:</strong> {{ car.fuel }}</p>
+                <p><strong>Condition:</strong> {{ car.condition }}</p>
+                <p><strong>Price:</strong> ${{ car.price }}</p>
+                 <a href="{{ url_for('remove_from_cart', car_id=car.id) }}" class="cart-btn" style="background-color: red;">Remove</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <a href="{{ url_for('checkout') }}" class="cart-btn" style="background-color: green;">Proceed to Checkout</a>
+{% else %}
+    <p>Your cart is empty.</p>
+{% endif %}
+{% endblock %}

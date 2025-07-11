@@ -1,0 +1,9 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="checkout-success">
+    <h2>Thank you for your purchase!</h2>
+    <p>Your car(s) will be delivered soon 🚗💨</p>
+    <a href="{{ url_for('index') }}" class="cart-btn">Back to Home</a>
+</div>
+{% endblock %}
