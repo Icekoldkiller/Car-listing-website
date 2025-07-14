@@ -1,9 +1,22 @@
 {% extends "layout.html" %}
 
 {% block content %}
-<div class="checkout-success">
+<div id="spinner" class="checkout-spinner">
+    <div class="loader"></div>
+    <p>Processing your order...</p>
+</div>
+
+<div id="checkout-success" class="checkout-success" style="display: none;">
     <h2>Thank you for your purchase!</h2>
     <p>Your car(s) will be delivered soon 🚗💨</p>
     <a href="{{ url_for('index') }}" class="cart-btn">Back to Home</a>
 </div>
+
+<script>
+    
+    setTimeout(() => {
+        document.getElementById('spinner').style.display = 'none';
+        document.getElementById('checkout-success').style.display = 'block';
+    }, 2500);
+</script>
 {% endblock %}

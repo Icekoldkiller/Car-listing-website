@@ -1,4 +1,5 @@
 {% extends "layout.html" %}
+
 {% block content %}
 <h2>Your Cart</h2>
 
@@ -13,13 +14,18 @@
                 <p><strong>Year:</strong> {{ car.year }}</p>
                 <p><strong>Fuel:</strong> {{ car.fuel }}</p>
                 <p><strong>Condition:</strong> {{ car.condition }}</p>
-                <p><strong>Price:</strong> ${{ car.price }}</p>
-                 <a href="{{ url_for('remove_from_cart', car_id=car.id) }}" class="cart-btn" style="background-color: red;">Remove</a>
+                <p><strong>Price:</strong> ${{ "%.2f"|format(car.price) }}</p>
+                <a href="{{ url_for('remove_from_cart', car_id=car.id) }}" class="cart-btn" style="background-color: red;">Remove</a>
             </div>
         </div>
         {% endfor %}
     </div>
+
+    <h3>Total: ${{ "%.2f"|format(total) }}</h3>
+
+    <a href="{{ url_for('clear_cart') }}" class="cart-btn" style="background-color: darkred;">Clear Cart</a>
     <a href="{{ url_for('checkout') }}" class="cart-btn" style="background-color: green;">Proceed to Checkout</a>
+
 {% else %}
     <p>Your cart is empty.</p>
 {% endif %}

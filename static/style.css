@@ -129,3 +129,120 @@ img {
     font-size: 18px;
     margin-bottom: 30px;
 }
+
+.checkout-spinner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 60px;
+    text-align: center;
+}
+
+.checkout-spinner p {
+    margin-top: 15px;
+    font-size: 18px;
+}
+
+.loader {
+    border: 10px solid #f3f3f3;
+    border-top: 10px solid #00ccff;
+    border-radius: 50%;
+    width: 70px;
+    height: 70px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.checkout-success {
+    background-color: rgba(255, 255, 255, 0.05);
+    padding: 40px;
+    border-radius: 20px;
+    text-align: center;
+    animation: fadeIn 0.8s ease-in-out;
+}
+
+.car-detail {
+    display: flex;
+    gap: 40px;
+    margin: 40px auto;
+    background-color: rgba(255, 255, 255, 0.05);
+    padding: 30px;
+    border-radius: 16px;
+    max-width: 900px;
+}
+
+.car-detail img {
+    width: 400px;
+    border-radius: 10px;
+}
+
+.car-detail .details {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.car-detail .cart-btn {
+    margin-top: 20px;
+    padding: 10px 20px;
+}
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(to bottom, #000000, #003366);
+            color: white;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar a {
+            color: #fff;
+            text-decoration: none;
+            margin-right: 15px;
+            font-weight: bold;
+        }
+
+        .navbar a:hover {
+            color: #00ccff;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            animation: fadeIn 0.8s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .cart-btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #0077cc;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: background 0.3s ease;
+            margin: 5px;
+        }
+
+        .cart-btn:hover {
+            background-color: #005fa3;
+        }
+    

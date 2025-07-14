@@ -16,7 +16,10 @@
         <td>{{ car.brand }}</td>
         <td>{{ car.model }}</td>
         <td>{{ car.year }}</td>
-        <td><a href="{{ url_for('delete_car', car_id=car.id) }}" class="delete-btn">Delete</a></td>
+        <td>
+            <a href="{{ url_for('edit_car', car_id=car.id) }}" class="cart-btn">Edit</a>
+            <a href="{{ url_for('delete_car', car_id=car.id) }}" class="delete-btn">Delete</a>
+        </td>
     </tr>
     {% endfor %}
 </table>

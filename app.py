@@ -165,13 +165,38 @@ def remove_from_cart(car_id):
 @app.route('/cart')
 def cart():
     cart_ids = session.get('cart', [])
-    cars = Car.query.filter(Car.id.in_(cart_ids)).all()
-    return render_template('cart.html', cars=cars)
+    cars = Car.query.filter(Car.id.in_(cart_ids)).all() if cart_ids else []
+    total = sum(car.price for car in cars) if cars else 0.0
+    return render_template('cart.html', cars=cars, total=total)
+
+@app.route('/clear-cart')
+def clear_cart():
+    session.pop('cart', None)
+    return redirect(url_for('cart'))
+
 
 @app.route('/checkout')
 def checkout():
     session.pop('cart', None)
-    return "Thank you for your purchase!"
+    return render_template('checkout.html')
+
+@app.route('/filter')
+def filter_cars():
+    brand = request.args.get('brand')
+    fuel = request.args.get('fuel')
+    year = request.args.get('year')
+
+    query = Car.query
+    if brand:
+        query = query.filter_by(brand=brand)
+    if fuel:
+        query = query.filter_by(fuel=fuel)
+    if year:
+        query = query.filter_by(year=year)
+
+    cars = query.all()
+    return render_template('filtered_cars.html', cars=cars)
+
 
 
 if __name__ == '__main__':

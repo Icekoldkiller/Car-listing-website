@@ -1,0 +1,16 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="car-detail">
+    <img src="{{ url_for('static', filename='images/' + car.image) }}" alt="Car Image">
+    <div class="details">
+        <h2>{{ car.brand }} {{ car.model }}</h2>
+        <p><strong>Mileage:</strong> {{ car.mileage }}</p>
+        <p><strong>Year:</strong> {{ car.year }}</p>
+        <p><strong>Fuel:</strong> {{ car.fuel }}</p>
+        <p><strong>Condition:</strong> {{ car.condition }}</p>
+        <p><strong>Price:</strong> ${{ "%.2f"|format(car.price) }}</p>
+        <a href="{{ url_for('add_to_cart', car_id=car.id) }}" class="cart-btn">Add to Cart</a>
+    </div>
+</div>
+{% endblock %}

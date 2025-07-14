@@ -1,16 +1,41 @@
 {% extends "layout.html" %}
+
 {% block content %}
-<h2>Edit Car</h2>
-<form method="POST" enctype="multipart/form-data" class="form">
-    <input type="text" name="model" value="{{ car.model }}" required>
-    <input type="text" name="mileage" value="{{ car.mileage }}" required>
-    <input type="number" name="year" value="{{ car.year }}" required>
+<h2>Edit Car Details</h2>
+
+<form action="{{ url_for('edit_car', car_id=car.id) }}" method="POST" enctype="multipart/form-data" class="car-form">
+    <label>Brand:</label>
     <input type="text" name="brand" value="{{ car.brand }}" required>
-    <input type="text" name="fuel" value="{{ car.fuel }}" required>
-    <input type="text" name="condition" value="{{ car.condition }}" required>
-    <input type="number" step="0.01" name="price" value="{{ car.price }}" required>
-    <label>Change Image:</label>
-    <input type="file" name="image">
-    <button type="submit">Update Car</button>
+
+    <label>Model:</label>
+    <input type="text" name="model" value="{{ car.model }}" required>
+
+    <label>Mileage:</label>
+    <input type="text" name="mileage" value="{{ car.mileage }}" required>
+
+    <label>Year:</label>
+    <input type="number" name="year" value="{{ car.year }}" required>
+
+    <label>Fuel Type:</label>
+    <select name="fuel" required>
+        <option value="Petrol" {% if car.fuel == 'Petrol' %}selected{% endif %}>Petrol</option>
+        <option value="Diesel" {% if car.fuel == 'Diesel' %}selected{% endif %}>Diesel</option>
+        <option value="Electric" {% if car.fuel == 'Electric' %}selected{% endif %}>Electric</option>
+        <option value="Hybrid" {% if car.fuel == 'Hybrid' %}selected{% endif %}>Hybrid</option>
+    </select>
+
+    <label>Condition:</label>
+    <select name="condition" required>
+        <option value="New" {% if car.condition == 'New' %}selected{% endif %}>New</option>
+        <option value="Used" {% if car.condition == 'Used' %}selected{% endif %}>Used</option>
+    </select>
+
+    <label>Price (USD):</label>
+    <input type="number" name="price" step="0.01" value="{{ car.price }}" required>
+
+    <label>Change Image (optional):</label>
+    <input type="file" name="image" accept="image/*">
+
+    <button type="submit" class="cart-btn">Save Changes</button>
 </form>
 {% endblock %}
