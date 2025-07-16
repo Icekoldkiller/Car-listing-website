@@ -1,5 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import generate_password_hash, check_password_hash
+from models import CartItem, Car, User
 import os
 
 app = Flask(__name__)
@@ -29,6 +31,30 @@ class Car(db.Model):
     condition = db.Column(db.String(20), nullable=False)
     image = db.Column(db.String(100), nullable=False)
     price = db.Column(db.Float, nullable=False)
+
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True)
+    password_hash = db.Column(db.String(120))
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+    
+class Order(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    car_id = db.Column(db.Integer, db.ForeignKey('car.id'))
+    user = db.relationship('User', backref='orders')
+    car = db.relationship('Car')
+
+class CartItem(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, nullable=False)
+    car_id = db.Column(db.Integer, db.ForeignKey('car.id'), nullable=False)
+
 
 # --- Routes ---
 
@@ -141,7 +167,7 @@ def admin_login():
     return render_template('login.html')
 
 @app.route('/logout')
-def logout():
+def logout_admin():
     session.pop('admin_logged_in', None)
     return redirect(url_for('index'))
 
@@ -153,20 +179,26 @@ def add_to_cart(car_id):
     session['cart'] = cart
     return redirect(url_for('index'))
 
-@app.route('/remove-from-cart/<int:car_id>')
+@app.route('/remove_from_cart/<int:car_id>')
 def remove_from_cart(car_id):
-    cart = session.get('cart', [])
-    if car_id in cart:
-        cart.remove(car_id)
-    session['cart'] = cart
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    item = CartItem.query.filter_by(user_id=session['user_id'], car_id=car_id).first()
+    if item:
+        db.session.delete(item)
+        db.session.commit()
     return redirect(url_for('cart'))
 
 
 @app.route('/cart')
 def cart():
-    cart_ids = session.get('cart', [])
-    cars = Car.query.filter(Car.id.in_(cart_ids)).all() if cart_ids else []
-    total = sum(car.price for car in cars) if cars else 0.0
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    items = CartItem.query.filter_by(user_id=session['user_id']).all()
+    cars = [item.car for item in items]
+    total = sum(car.price for car in cars)
     return render_template('cart.html', cars=cars, total=total)
 
 @app.route('/clear-cart')
@@ -174,10 +206,18 @@ def clear_cart():
     session.pop('cart', None)
     return redirect(url_for('cart'))
 
-
 @app.route('/checkout')
 def checkout():
-    session.pop('cart', None)
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    items = CartItem.query.filter_by(user_id=session['user_id']).all()
+    for item in items:
+        order = Order(user_id=item.user_id, car_id=item.car_id)
+        db.session.add(order)
+        db.session.delete(item)  # Remove from cart
+
+    db.session.commit()
     return render_template('checkout.html')
 
 @app.route('/filter')
@@ -196,6 +236,80 @@ def filter_cars():
 
     cars = query.all()
     return render_template('filtered_cars.html', cars=cars)
+
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        if User.query.filter_by(username=username).first():
+            return "User already exists."
+
+        user = User(username=username)
+        user.set_password(password)
+        db.session.add(user)
+        db.session.commit()
+        return redirect(url_for('login'))
+
+    return render_template('register.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        user = User.query.filter_by(username=username).first()
+        if user and user.check_password(password):
+            session['user_id'] = user.id
+            session['username'] = user.username
+            return redirect(url_for('index'))
+        return "Invalid credentials."
+
+    return render_template('user_login.html')
+
+@app.route('/search')
+def search():
+    query = request.args.get('query', '')
+    results = Car.query.filter(
+        (Car.brand.ilike(f"%{query}%")) |
+        (Car.model.ilike(f"%{query}%")) |
+        (Car.fuel.ilike(f"%{query}%")) |
+        (Car.condition.ilike(f"%{query}%"))
+    ).all()
+    return render_template('search_results.html', cars=results, query=query)
+
+@app.route('/profile')
+def profile():
+    
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    
+    return render_template('profile.html', username=session['username'])
+
+@app.route('/orders')
+def orders():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    orders = Order.query.filter_by(user_id=session['user_id']).all()
+    return render_template('orders.html', orders=orders)
+
+@app.route('/admin/users')
+def admin_users():
+    if 'admin_logged_in' not in session:
+        return redirect(url_for('admin_login'))
+    users = User.query.all()
+    return render_template('admin_users.html', users=users)
+
+@app.route('/logout_user')
+def logout_user():
+    session.pop('user_id', None)
+    session.pop('username', None)
+    return redirect(url_for('login'))
+
 
 
 

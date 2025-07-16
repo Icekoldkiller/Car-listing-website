@@ -1,0 +1,35 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<h2>Your Order History</h2>
+
+{% if orders %}
+    <table class="orders-table">
+        <thead>
+            <tr>
+                <th>Brand</th>
+                <th>Model</th>
+                <th>Year</th>
+                <th>Price</th>
+                <th>Image</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in orders %}
+            <tr>
+                <td>{{ order.car.brand }}</td>
+                <td>{{ order.car.model }}</td>
+                <td>{{ order.car.year }}</td>
+                <td>${{ "%.2f"|format(order.car.price) }}</td>
+                <td>
+                    <img src="{{ url_for('static', filename='images/' + order.car.image) }}" alt="Car Image" width="120">
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>You haven't placed any orders yet.</p>
+{% endif %}
+
+{% endblock %}

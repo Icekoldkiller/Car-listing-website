@@ -1,13 +1,8 @@
 {% extends "layout.html" %}
 
 {% block content %}
-<h1 class="title">Available Cars</h1>
+<h1 class="title"> nurburgring Motors</h1>
 
-<form method="get" class="filter-form">
-    <input type="text" name="brand" placeholder="Filter by Brand">
-    <input type="number" name="year" placeholder="Filter by Year">
-    <button type="submit">Filter</button>
-</form>
 
 <div class="car-list">
     {% for car in cars %}

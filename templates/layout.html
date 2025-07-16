@@ -11,16 +11,42 @@
         <div class="nav-links">
             <a href="{{ url_for('index') }}">Home</a>
             <a href="{{ url_for('cart') }}">Cart</a>
-            {% if session.get('admin_logged_in') %}
-                <a href="{{ url_for('admin') }}">Admin</a>
-                <a href="{{ url_for('logout') }}">Logout</a>
+            <a href="{{ url_for('orders') }}">Order History</a>
+
+            <!-- ✅ Filter Dropdown with Form -->
+            <form action="{{ url_for('filter_cars') }}" method="get" class="dropdown">
+                <select name="brand" onchange="this.form.submit()" class="dropbtn">
+                    <option disabled selected>Filter Cars</option>
+                    <option value="Toyota">Toyota</option>
+                    <option value="Nissan">Nissan</option>
+                    <option value="Diesel">Diesel</option>
+                    <option value="Used">Used</option>
+                </select>
+            </form>
+
+            {# ✅ User Auth Links #}
+            {% if session.get('username') %}
+                <a href="{{ url_for('profile') }}">Profile</a>
+                <a href="{{ url_for('logout_user') }}">Logout</a>
             {% else %}
+                <a href="{{ url_for('login') }}">Login</a>
+                <a href="{{ url_for('register') }}">Register</a>
+            {% endif %}
+
+            {# ✅ Admin Auth Links (only show if not logged in as user) #}
+            {% if session.get('admin_logged_in') and not session.get('username') %}
+                <a href="{{ url_for('admin') }}">Admin</a>
+                <a href="{{ url_for('logout_admin') }}">Logout</a>
+            {% elif not session.get('username') %}
                 <a href="{{ url_for('admin_login') }}">Admin Login</a>
             {% endif %}
         </div>
 
-        
-        
+        <!-- 🔍 Search form inside navbar -->
+        <form action="{{ url_for('search') }}" method="GET" class="search-form">
+            <input type="text" name="query" placeholder="Search cars..." required>
+            <button type="submit">Search</button>
+        </form>
     </div>
 
     <div class="container">

@@ -4,6 +4,8 @@
 <div style="margin-bottom: 20px;">
     <a href="{{ url_for('add_car') }}" class="cart-btn">+ Add New Car</a>
     <a href="{{ url_for('logout') }}" class="cart-btn" style="background-color: red;">Logout</a>
+    <a href="{{ url_for('delete_car', car_id=car.id) }}" class="cart-btn" style="background-color: red;" onclick="return confirm('Are you sure you want to delete this car?');">Delete</a>
+
 </div>
 
 <table>
