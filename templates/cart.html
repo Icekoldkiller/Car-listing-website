@@ -3,19 +3,19 @@
 {% block content %}
 <h2>Your Cart</h2>
 
-{% if cars %}
+{% if cart_items %}
     <div class="car-list">
-        {% for car in cars %}
+        {% for item in cart_items %}
         <div class="car-card">
-            <img src="{{ url_for('static', filename='images/' + car.image) }}" alt="Car Image">
+            <img src="{{ url_for('static', filename='images/' + item.car.image) }}" alt="Car Image">
             <div class="details">
-                <h2>{{ car.brand }} {{ car.model }}</h2>
-                <p><strong>Mileage:</strong> {{ car.mileage }}</p>
-                <p><strong>Year:</strong> {{ car.year }}</p>
-                <p><strong>Fuel:</strong> {{ car.fuel }}</p>
-                <p><strong>Condition:</strong> {{ car.condition }}</p>
-                <p><strong>Price:</strong> ${{ "%.2f"|format(car.price) }}</p>
-                <a href="{{ url_for('remove_from_cart', car_id=car.id) }}" class="cart-btn" style="background-color: red;">Remove</a>
+                <h2>{{ item.car.brand }} {{ item.car.model }}</h2>
+                <p><strong>Mileage:</strong> {{ item.car.mileage }}</p>
+                <p><strong>Year:</strong> {{ item.car.year }}</p>
+                <p><strong>Fuel:</strong> {{ item.car.fuel }}</p>
+                <p><strong>Condition:</strong> {{ item.car.condition }}</p>
+                <p><strong>Price:</strong> ${{ "%.2f"|format(item.car.price) }}</p>
+                <a href="{{ url_for('remove_from_cart', car_id=item.car.id) }}" class="cart-btn" style="background-color: red;">Remove</a>
             </div>
         </div>
         {% endfor %}

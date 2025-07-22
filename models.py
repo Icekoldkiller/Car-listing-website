@@ -37,5 +37,6 @@ class CartItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, nullable=False)
     car_id = db.Column(db.Integer, db.ForeignKey('car.id'), nullable=False)
-    
+    quantity = db.Column(db.Integer, nullable=False, default=1)
 
+    car = db.relationship('Car')

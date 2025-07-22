@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import CartItem, Car, User
@@ -54,6 +54,7 @@ class CartItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, nullable=False)
     car_id = db.Column(db.Integer, db.ForeignKey('car.id'), nullable=False)
+    car = db.relationship('Car')
 
 
 # --- Routes ---
@@ -173,10 +174,19 @@ def logout_admin():
 
 @app.route('/add-to-cart/<int:car_id>')
 def add_to_cart(car_id):
-    cart = session.get('cart', [])
-    if car_id not in cart:
-        cart.append(car_id)
-    session['cart'] = cart
+    if 'user_id' in session:
+        existing = CartItem.query.filter_by(user_id=session['user_id'], car_id=car_id).first()
+        if not existing:
+            item = CartItem(user_id=session['user_id'], car_id=car_id)
+            db.session.add(item)
+            db.session.commit()
+    else:
+        # fallback to session-based cart if user not logged in
+        cart = session.get('cart', [])
+        if car_id not in cart:
+            cart.append(car_id)
+        session['cart'] = cart
+
     return redirect(url_for('index'))
 
 @app.route('/remove_from_cart/<int:car_id>')
@@ -188,37 +198,54 @@ def remove_from_cart(car_id):
     if item:
         db.session.delete(item)
         db.session.commit()
-    return redirect(url_for('cart'))
+    return redirect(url_for('cart_page'))
 
 
 @app.route('/cart')
-def cart():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
+def cart_page():
+    user_id = session.get('user_id')
+    cart_items = []
 
-    items = CartItem.query.filter_by(user_id=session['user_id']).all()
-    cars = [item.car for item in items]
-    total = sum(car.price for car in cars)
-    return render_template('cart.html', cars=cars, total=total)
+    if user_id:
+        items = CartItem.query.filter_by(user_id=user_id).all()
+        cart_items = [{'car': item.car} for item in items]
+    else:
+        ids = session.get('cart', [])
+        cars = Car.query.filter(Car.id.in_(ids)).all()
+        cart_items = [{'car': car} for car in cars]
+
+    total = sum(item['car'].price for item in cart_items)
+    return render_template('cart.html', cart_items=cart_items, total=total)
+
 
 @app.route('/clear-cart')
 def clear_cart():
     session.pop('cart', None)
-    return redirect(url_for('cart'))
+    return redirect(url_for('cart_page'))
 
 @app.route('/checkout')
 def checkout():
     if 'user_id' not in session:
+        flash('You must be logged in to proceed to checkout.', 'error')
         return redirect(url_for('login'))
 
-    items = CartItem.query.filter_by(user_id=session['user_id']).all()
+    return render_template('checkout.html')
+
+@app.route('/finalize-checkout')
+def finalize_checkout():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user_id = session['user_id']
+    items = CartItem.query.filter_by(user_id=user_id).all()
+
     for item in items:
-        order = Order(user_id=item.user_id, car_id=item.car_id)
+        order = Order(user_id=user_id, car_id=item.car_id)
         db.session.add(order)
-        db.session.delete(item)  # Remove from cart
+        db.session.delete(item)
 
     db.session.commit()
-    return render_template('checkout.html')
+    return redirect(url_for('orders'))
 
 @app.route('/filter')
 def filter_cars():
@@ -292,10 +319,12 @@ def profile():
 @app.route('/orders')
 def orders():
     if 'user_id' not in session:
+        flash('Please log in to view your order history.', 'error')
         return redirect(url_for('login'))
 
-    orders = Order.query.filter_by(user_id=session['user_id']).all()
-    return render_template('orders.html', orders=orders)
+    user_id = session['user_id']
+    user_orders = Order.query.filter_by(user_id=user_id).all()
+    return render_template('orders.html', orders=user_orders)
 
 @app.route('/admin/users')
 def admin_users():
@@ -309,6 +338,24 @@ def logout_user():
     session.pop('user_id', None)
     session.pop('username', None)
     return redirect(url_for('login'))
+
+@app.route('/confirm-checkout', methods=['POST'])
+def confirm_checkout():
+    if 'user_id' not in session:
+        flash('You must be logged in to place an order.', 'error')
+        return redirect(url_for('login'))
+
+    user_id = session['user_id']
+    items = CartItem.query.filter_by(user_id=user_id).all()
+    for item in items:
+        order = Order(user_id=user_id, car_id=item.car_id)
+        db.session.add(order)
+        db.session.delete(item)
+    db.session.commit()
+
+    flash('Order placed successfully!', 'success')
+    return redirect(url_for('orders'))
+
 
 
 

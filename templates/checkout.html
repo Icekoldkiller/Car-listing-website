@@ -13,10 +13,9 @@
 </div>
 
 <script>
-    
     setTimeout(() => {
-        document.getElementById('spinner').style.display = 'none';
-        document.getElementById('checkout-success').style.display = 'block';
+        window.location.href = "{{ url_for('finalize_checkout') }}";
     }, 2500);
 </script>
+
 {% endblock %}

@@ -1,16 +1,19 @@
 {% extends "layout.html" %}
 {% block content %}
 <h2>Admin Dashboard</h2>
+
 <div style="margin-bottom: 20px;">
     <a href="{{ url_for('add_car') }}" class="cart-btn">+ Add New Car</a>
-    <a href="{{ url_for('logout') }}" class="cart-btn" style="background-color: red;">Logout</a>
-    <a href="{{ url_for('delete_car', car_id=car.id) }}" class="cart-btn" style="background-color: red;" onclick="return confirm('Are you sure you want to delete this car?');">Delete</a>
-
+    <a href="{{ url_for('logout_user') }}" class="cart-btn" style="background-color: red;">Logout</a>
 </div>
 
 <table>
     <tr>
-        <th>Image</th><th>Brand</th><th>Model</th><th>Year</th><th>Action</th>
+        <th>Image</th>
+        <th>Brand</th>
+        <th>Model</th>
+        <th>Year</th>
+        <th>Action</th>
     </tr>
     {% for car in cars %}
     <tr>
@@ -20,7 +23,7 @@
         <td>{{ car.year }}</td>
         <td>
             <a href="{{ url_for('edit_car', car_id=car.id) }}" class="cart-btn">Edit</a>
-            <a href="{{ url_for('delete_car', car_id=car.id) }}" class="delete-btn">Delete</a>
+            <a href="{{ url_for('delete_car', car_id=car.id) }}" class="delete-btn" onclick="return confirm('Are you sure you want to delete this car?');">Delete</a>
         </td>
     </tr>
     {% endfor %}
