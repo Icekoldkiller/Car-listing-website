@@ -20,29 +20,34 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# --- Models ---
+# --- Models --    
+ 
 class Car(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    model = db.Column(db.String(50), nullable=False)
-    mileage = db.Column(db.String(50), nullable=False)
+    model = db.Column(db.String(100), nullable=False)
+    mileage = db.Column(db.Integer, nullable=False)
     year = db.Column(db.Integer, nullable=False)
     brand = db.Column(db.String(50), nullable=False)
-    fuel = db.Column(db.String(20), nullable=False)
-    condition = db.Column(db.String(20), nullable=False)
-    image = db.Column(db.String(100), nullable=False)
-    price = db.Column(db.Float, nullable=False)
+    fuel = db.Column(db.String(50), nullable=False)
+    condition = db.Column(db.String(50), nullable=False)
+    image = db.Column(db.String(100), nullable=True)
+    price = db.Column(db.Float, nullable=False)  
+    seller_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    seller = db.relationship('User', back_populates='listed_cars')
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True)
     password_hash = db.Column(db.String(120))
 
+    listed_cars = db.relationship('Car', back_populates='seller')
+    
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
-    
+
 class Order(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
@@ -75,6 +80,7 @@ def index():
     cars = cars.all()
 
     return render_template('index.html', cars=cars)
+
 
 @app.route('/add', methods=['GET', 'POST'])
 def add_car():
@@ -181,7 +187,6 @@ def add_to_cart(car_id):
             db.session.add(item)
             db.session.commit()
     else:
-        # fallback to session-based cart if user not logged in
         cart = session.get('cart', [])
         if car_id not in cart:
             cart.append(car_id)
@@ -200,7 +205,6 @@ def remove_from_cart(car_id):
         db.session.commit()
     return redirect(url_for('cart_page'))
 
-
 @app.route('/cart')
 def cart_page():
     user_id = session.get('user_id')
@@ -216,7 +220,6 @@ def cart_page():
 
     total = sum(item['car'].price for item in cart_items)
     return render_template('cart.html', cart_items=cart_items, total=total)
-
 
 @app.route('/clear-cart')
 def clear_cart():
@@ -264,7 +267,6 @@ def filter_cars():
     cars = query.all()
     return render_template('filtered_cars.html', cars=cars)
 
-
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
@@ -310,11 +312,18 @@ def search():
 
 @app.route('/profile')
 def profile():
-    
-    if 'username' not in session:
+    user_id = session.get('user_id')
+    if not user_id:
+        flash("You must be logged in to view your profile.")
         return redirect(url_for('login'))
-    
-    return render_template('profile.html', username=session['username'])
+
+    user = User.query.filter_by(id=user_id).first()
+    if not user:
+        flash("User not found.")
+        return redirect(url_for('login'))
+
+    user_cars = user.listed_cars  
+    return render_template('profile.html', user=user, user_cars=user_cars)
 
 @app.route('/orders')
 def orders():
@@ -356,12 +365,44 @@ def confirm_checkout():
     flash('Order placed successfully!', 'success')
     return redirect(url_for('orders'))
 
+@app.route('/add_car_user', methods=['GET', 'POST'])
+def add_car_user():
+    if request.method == 'POST':
+        brand = request.form['brand']
+        model = request.form['model']
+        mileage = request.form['mileage']
+        year = request.form['year']
+        fuel = request.form['fuel']
+        condition = request.form['condition']
+        price = request.form['price']
+        image_file = request.files['image']
 
+        image_filename = None
+        if image_file:
+            image_filename = image_file.filename
+            image_path = os.path.join(app.config['UPLOAD_FOLDER'], image_filename)
+            image_file.save(image_path)
 
+        car = Car(
+            brand=brand,
+            model=model,
+            mileage=mileage,
+            year=year,
+            fuel=fuel,
+            condition=condition,
+            price=price,
+            image=image_filename,
+            seller_id=session.get('user_id')  # FIXED
+        )
+        db.session.add(car)
+        db.session.commit()
+        flash('Your car has been listed for sale!', 'success')
+        return redirect(url_for('profile'))
+
+    return render_template('add_car_user.html')
 
 
 if __name__ == '__main__':
     with app.app_context():
-        db.create_all()  
+        db.create_all()
     app.run(debug=True)
-

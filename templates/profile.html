@@ -1,6 +1,33 @@
 {% extends "layout.html" %}
+
 {% block content %}
-<h2>Welcome, {{ username }}</h2>
+<h2>Welcome, {{ user.username }}</h2>
 <p>This is your profile page.</p>
+
 <a href="{{ url_for('logout_user') }}" class="cart-btn">Log out</a>
+<a href="{{ url_for('add_car_user') }}" class="cart-btn" style="background-color: green; margin-bottom: 20px; display: inline-block;">Add Car for Sale</a>
+
+<h3>Your Listed Cars</h3>
+
+{% if user_cars %}
+    <div class="car-list">
+        {% for car in user_cars %}
+            <div class="car-card">
+                <img src="{{ url_for('static', filename='images/' ~ car.image) }}" alt="Car Image" width="250">
+                <div class="details">
+                    <h4>{{ car.brand }} {{ car.model }}</h4>
+                    <p><strong>Year:</strong> {{ car.year }}</p>
+                    <p><strong>Mileage:</strong> {{ car.mileage }}</p>
+                    <p><strong>Fuel:</strong> {{ car.fuel }}</p>
+                    <p><strong>Condition:</strong> {{ car.condition }}</p>
+                    <p><strong>Price:</strong> ${{ "%.2f"|format(car.price) }}</p>
+                    <a href="{{ url_for('car_detail', car_id=car.id) }}" class="cart-btn">View</a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <p>You haven't listed any cars yet.</p>
+{% endif %}
+
 {% endblock %}

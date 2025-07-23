@@ -13,12 +13,17 @@ class Car(db.Model):
     fuel = db.Column(db.String(50), nullable=False)
     condition = db.Column(db.String(50), nullable=False)
     image = db.Column(db.String(100), nullable=True)
-    price = db.Column(db.Float, nullable=False)  
+    price = db.Column(db.Float, nullable=False)
 
+    seller_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    seller = db.relationship('User', back_populates='listed_cars', foreign_keys=[seller_id])
+   
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True)
     password_hash = db.Column(db.String(120))
+
+    listed_cars = db.relationship('Car', back_populates='seller')
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
