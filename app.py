@@ -1,11 +1,13 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
-from models import CartItem, Car, User
+from models import CartItem, Car, User,db
+from flask_migrate import Migrate
 import os
 
 app = Flask(__name__)
 app.secret_key = 'supersecret'
+migrate = Migrate(app, db)
 
 # Database setup
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///cars.db'
@@ -20,7 +22,12 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# --- Models --    
+# --- Models --  
+
+bookmarks = db.Table('bookmarks',
+    db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
+    db.Column('car_id', db.Integer, db.ForeignKey('car.id'))
+)  
  
 class Car(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -41,13 +48,14 @@ class User(db.Model):
     password_hash = db.Column(db.String(120))
 
     listed_cars = db.relationship('Car', back_populates='seller')
-    
+    bookmarked_cars = db.relationship('Car', secondary=bookmarks, backref='bookmarked_by')
+
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
-
+    
 class Order(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
@@ -156,11 +164,6 @@ def edit_car(car_id):
 
     return render_template('edit_car.html', car=car)
 
-@app.route('/car/<int:car_id>')
-def car_detail(car_id):
-    car = Car.query.get_or_404(car_id)
-    return render_template('car_detail.html', car=car)
-
 @app.route('/admin-login', methods=['GET', 'POST'])
 def admin_login():
     if request.method == 'POST':
@@ -173,10 +176,41 @@ def admin_login():
             return render_template('login.html', error="Invalid credentials")
     return render_template('login.html')
 
+@app.route('/car/<int:car_id>')
+def car_detail(car_id):
+    car = Car.query.get_or_404(car_id)
+    return render_template('car_detail.html', car=car)
+
+
 @app.route('/logout')
 def logout_admin():
     session.pop('admin_logged_in', None)
     return redirect(url_for('index'))
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        user = User.query.filter_by(username=username).first()
+        if user and user.check_password(password):
+            session['user_id'] = user.id
+
+            # Merge session cart with DB cart
+            session_cart = session.pop('cart', [])
+            for car_id in session_cart:
+                exists = CartItem.query.filter_by(user_id=user.id, car_id=car_id).first()
+                if not exists:
+                    item = CartItem(user_id=user.id, car_id=car_id)
+                    db.session.add(item)
+            db.session.commit()
+
+            flash('Logged in successfully.')
+            return redirect(url_for('index'))
+        else:
+            flash('Invalid credentials.')
+    return render_template('User_login.html')
 
 @app.route('/add-to-cart/<int:car_id>')
 def add_to_cart(car_id):
@@ -206,20 +240,16 @@ def remove_from_cart(car_id):
     return redirect(url_for('cart_page'))
 
 @app.route('/cart')
-def cart_page():
-    user_id = session.get('user_id')
-    cart_items = []
-
-    if user_id:
-        items = CartItem.query.filter_by(user_id=user_id).all()
-        cart_items = [{'car': item.car} for item in items]
+def cart():
+    if 'user_id' in session:
+        items = CartItem.query.filter_by(user_id=session['user_id']).all()
+        cars = [item.car for item in items]
     else:
-        ids = session.get('cart', [])
-        cars = Car.query.filter(Car.id.in_(ids)).all()
-        cart_items = [{'car': car} for car in cars]
+        cart_ids = session.get('cart', [])
+        cars = Car.query.filter(Car.id.in_(cart_ids)).all()
+    total = sum(car.price for car in cars)
+    return render_template('cart.html', cars=cars, total=total)
 
-    total = sum(item['car'].price for item in cart_items)
-    return render_template('cart.html', cart_items=cart_items, total=total)
 
 @app.route('/clear-cart')
 def clear_cart():
@@ -284,21 +314,6 @@ def register():
 
     return render_template('register.html')
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-
-        user = User.query.filter_by(username=username).first()
-        if user and user.check_password(password):
-            session['user_id'] = user.id
-            session['username'] = user.username
-            return redirect(url_for('index'))
-        return "Invalid credentials."
-
-    return render_template('user_login.html')
-
 @app.route('/search')
 def search():
     query = request.args.get('query', '')
@@ -317,13 +332,8 @@ def profile():
         flash("You must be logged in to view your profile.")
         return redirect(url_for('login'))
 
-    user = User.query.filter_by(id=user_id).first()
-    if not user:
-        flash("User not found.")
-        return redirect(url_for('login'))
-
-    user_cars = user.listed_cars  
-    return render_template('profile.html', user=user, user_cars=user_cars)
+    user = User.query.get(user_id)
+    return render_template('profile.html', user=user, user_cars=user.listed_cars, bookmarks=user.bookmarked_cars)
 
 @app.route('/orders')
 def orders():
@@ -400,6 +410,27 @@ def add_car_user():
         return redirect(url_for('profile'))
 
     return render_template('add_car_user.html')
+
+
+@app.route('/bookmark/<int:car_id>', methods=['POST'])
+def bookmark(car_id):
+    if 'user_id' not in session:
+        flash("You must log in to bookmark cars.")
+        return redirect(url_for('login'))
+
+    user = User.query.get(session['user_id'])
+    car = Car.query.get_or_404(car_id)
+
+    if car not in user.bookmarked_cars:
+        user.bookmarked_cars.append(car)
+        db.session.commit()
+        flash("Car bookmarked!")
+    else:
+        flash("You’ve already bookmarked this car.")
+
+    return redirect(url_for('car_detail', car_id=car_id))
+
+
 
 
 if __name__ == '__main__':
