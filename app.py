@@ -2,7 +2,6 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import CartItem, Car, User,db
-from flask_migrate import Migrate
 import os
 
 app = Flask(__name__)
