@@ -35,7 +35,7 @@ class Car(db.Model):
     mileage = db.Column(db.Integer, nullable=False)
     year = db.Column(db.Integer, nullable=False)
     brand = db.Column(db.String(50), nullable=False)
-    fuel = db.Column(db.String(50), nullable=False)
+    fuel_type = db.Column(db.String(50), nullable=False)
     condition = db.Column(db.String(50), nullable=False)
     image = db.Column(db.String(100), nullable=True)
     price = db.Column(db.Float, nullable=False)  
@@ -67,27 +67,39 @@ class CartItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, nullable=False)
     car_id = db.Column(db.Integer, db.ForeignKey('car.id'), nullable=False)
+    quantity = db.Column(db.Integer, default=1)
     car = db.relationship('Car')
 
 
 # --- Routes ---
 
-@app.route('/')
+@app.route('/', methods=['GET', 'POST'])
 def index():
-    brand = request.args.get('brand')
-    year = request.args.get('year')
-
     cars = Car.query
-    if brand:
-        cars = cars.filter(Car.brand.ilike(f"%{brand}%"))
-    if year:
-        try:
-            cars = cars.filter_by(year=int(year))
-        except ValueError:
-            pass
+
+    # Get search and filter values from form
+    search_query = request.args.get('search')
+    brand_filter = request.args.get('brand')
+
+    # Apply search
+    if search_query:
+        cars = cars.filter(
+            (Car.brand.ilike(f'%{search_query}%')) |
+            (Car.model.ilike(f'%{search_query}%')) |
+            (Car.fuel_type.ilike(f'%{search_query}%')) |
+            (Car.condition.ilike(f'%{search_query}%'))
+        )
+
+    # Apply filter by brand
+    if brand_filter and brand_filter != 'All':
+        cars = cars.filter_by(brand=brand_filter)
+
     cars = cars.all()
 
-    return render_template('index.html', cars=cars)
+    # Get list of unique brands for dropdown
+    brands = [b[0] for b in db.session.query(Car.brand).distinct().all()]
+
+    return render_template('index.html', cars=cars, brands=brands)
 
 
 @app.route('/add', methods=['GET', 'POST'])
@@ -196,14 +208,19 @@ def login():
         user = User.query.filter_by(username=username).first()
         if user and user.check_password(password):
             session['user_id'] = user.id
+            session['username'] = user.username
 
-            # Merge session cart with DB cart
+            # Merge session cart (guest) with user's DB cart
             session_cart = session.pop('cart', [])
-            for car_id in session_cart:
-                exists = CartItem.query.filter_by(user_id=user.id, car_id=car_id).first()
-                if not exists:
-                    item = CartItem(user_id=user.id, car_id=car_id)
-                    db.session.add(item)
+            for item in session_cart:
+                car_id = item['car_id']
+                quantity = item.get('quantity', 1)
+
+                existing = CartItem.query.filter_by(user_id=user.id, car_id=car_id).first()
+                if existing:
+                    existing.quantity += quantity
+                else:
+                    db.session.add(CartItem(user_id=user.id, car_id=car_id, quantity=quantity))
             db.session.commit()
 
             flash('Logged in successfully.')
@@ -215,20 +232,36 @@ def login():
 @app.route('/add-to-cart/<int:car_id>')
 def add_to_cart(car_id):
     if 'user_id' in session:
-        existing = CartItem.query.filter_by(user_id=session['user_id'], car_id=car_id).first()
-        if not existing:
-            item = CartItem(user_id=session['user_id'], car_id=car_id)
+        # Logged-in user → store in CartItem (DB)
+        user_id = session['user_id']
+        item = CartItem.query.filter_by(user_id=user_id, car_id=car_id).first()
+        if item:
+            item.quantity += 1
+        else:
+            item = CartItem(user_id=user_id, car_id=car_id, quantity=1)
             db.session.add(item)
-            db.session.commit()
+        db.session.commit()
+        flash('Car added to your cart.')
     else:
+        # Guest user → store in session
         cart = session.get('cart', [])
-        if car_id not in cart:
-            cart.append(car_id)
+        found = False
+
+        for item in cart:
+            if isinstance(item, dict) and item['car_id'] == car_id:
+                item['quantity'] += 1
+                found = True
+
+        if not found:
+            cart.append({'car_id': car_id, 'quantity': 1})
+
         session['cart'] = cart
+        flash('Car added to your cart.')
 
-    return redirect(url_for('index'))
+    return redirect(url_for('cart'))
 
-@app.route('/remove_from_cart/<int:car_id>')
+
+@app.route('/remove_from_cart/<int:car_id>', methods=['POST'])
 def remove_from_cart(car_id):
     if 'user_id' not in session:
         return redirect(url_for('login'))
@@ -237,19 +270,33 @@ def remove_from_cart(car_id):
     if item:
         db.session.delete(item)
         db.session.commit()
-    return redirect(url_for('cart_page'))
+    return redirect(url_for('cart'))
+
 
 @app.route('/cart')
 def cart():
     if 'user_id' in session:
         items = CartItem.query.filter_by(user_id=session['user_id']).all()
-        cars = [item.car for item in items]
+        total = sum(item.car.price * item.quantity for item in items)
+        return render_template('cart.html', items=items, total=total)
     else:
-        cart_ids = session.get('cart', [])
-        cars = Car.query.filter(Car.id.in_(cart_ids)).all()
-    total = sum(car.price for car in cars)
-    return render_template('cart.html', cars=cars, total=total)
+        cart_items = session.get('cart', [])
+        items = []
+        total = 0
+        for entry in cart_items:
+            if isinstance(entry, dict):
+                car_id = entry.get('car_id')
+                quantity = entry.get('quantity', 1)
+            else:
+                car_id = entry
+                quantity = 1
 
+            car = Car.query.get(car_id)
+            if car:
+                items.append({'car': car, 'quantity': quantity})
+                total += car.price * quantity
+
+        return render_template('cart.html', items=items, total=total)
 
 @app.route('/clear-cart')
 def clear_cart():
@@ -430,7 +477,15 @@ def bookmark(car_id):
 
     return redirect(url_for('car_detail', car_id=car_id))
 
-
+@app.route('/update_quantity/<int:car_id>', methods=['POST'])
+def update_quantity(car_id):
+    if 'user_id' in session:
+        quantity = int(request.form.get('quantity', 1))
+        item = CartItem.query.filter_by(user_id=session['user_id'], car_id=car_id).first()
+        if item:
+            item.quantity = quantity
+            db.session.commit()
+    return redirect(url_for('cart'))
 
 
 if __name__ == '__main__':

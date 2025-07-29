@@ -4,17 +4,82 @@
     <meta charset="UTF-8">
     <title>Car Shop</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .navbar {
+            background-color: #222;
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .nav-left, .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .nav-links a, .nav-links form, .nav-links button {
+            color: white;
+            text-decoration: none;
+            margin: 0 5px;
+        }
+
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+
+        .nav-right form input[type="text"],
+        .nav-right form select {
+            padding: 5px;
+            margin-left: 10px;
+        }
+
+        .nav-right form button {
+            padding: 5px 10px;
+        }
+
+        .dropbtn {
+            background-color: #333;
+            color: white;
+            border: none;
+        }
+
+        .container {
+            padding: 20px;
+        }
+    </style>
 </head>
 <body>
 
     <div class="navbar">
-        <div class="nav-links">
+        <!-- 👈 Left side links -->
+        <div class="nav-left nav-links">
             <a href="{{ url_for('index') }}">Home</a>
             <a href="{{ url_for('cart') }}">Cart</a>
             <a href="{{ url_for('orders') }}">Order History</a>
 
-            <!-- ✅ Filter Dropdown with Form -->
-            <form action="{{ url_for('filter_cars') }}" method="get" class="dropdown">
+            {% if session.get('username') %}
+                <a href="{{ url_for('profile') }}">Profile</a>
+                <a href="{{ url_for('logout_user') }}">Logout</a>
+            {% else %}
+                <a href="{{ url_for('login') }}">Login</a>
+                <a href="{{ url_for('register') }}">Register</a>
+            {% endif %}
+
+            {% if session.get('admin_logged_in') and not session.get('username') %}
+                <a href="{{ url_for('admin') }}">Admin</a>
+                <a href="{{ url_for('logout_admin') }}">Logout</a>
+            {% elif not session.get('username') %}
+                <a href="{{ url_for('admin_login') }}">Admin Login</a>
+            {% endif %}
+        </div>
+
+        <!-- 👉 Right side search & filter -->
+        <div class="nav-right">
+            <form action="{{ url_for('index') }}" method="get">
                 <select name="brand" onchange="this.form.submit()" class="dropbtn">
                     <option disabled selected>Filter Cars</option>
                     <option value="Toyota">Toyota</option>
@@ -24,29 +89,11 @@
                 </select>
             </form>
 
-            {# ✅ User Auth Links #}
-            {% if session.get('username') %}
-                <a href="{{ url_for('profile') }}">Profile</a>
-                <a href="{{ url_for('logout_user') }}">Logout</a>
-            {% else %}
-                <a href="{{ url_for('login') }}">Login</a>
-                <a href="{{ url_for('register') }}">Register</a>
-            {% endif %}
-
-            {# ✅ Admin Auth Links (only show if not logged in as user) #}
-            {% if session.get('admin_logged_in') and not session.get('username') %}
-                <a href="{{ url_for('admin') }}">Admin</a>
-                <a href="{{ url_for('logout_admin') }}">Logout</a>
-            {% elif not session.get('username') %}
-                <a href="{{ url_for('admin_login') }}">Admin Login</a>
-            {% endif %}
+            <form action="{{ url_for('index') }}" method="get">
+                <input type="text" name="search" placeholder="Search cars..." required>
+                <button type="submit">Search</button>
+            </form>
         </div>
-
-        <!-- 🔍 Search form inside navbar -->
-        <form action="{{ url_for('search') }}" method="GET" class="search-form">
-            <input type="text" name="query" placeholder="Search cars..." required>
-            <button type="submit">Search</button>
-        </form>
     </div>
 
     <div class="container">

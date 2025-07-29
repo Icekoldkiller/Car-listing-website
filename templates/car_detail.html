@@ -13,4 +13,12 @@
         <a href="{{ url_for('add_to_cart', car_id=car.id) }}" class="cart-btn">Add to Cart</a>
     </div>
 </div>
+{% if session.get('user_id') %}
+    <form action="{{ url_for('bookmark', car_id=car.id) }}" method="POST">
+        <button type="submit" class="cart-btn" style="background-color: #3498db;">Bookmark</button>
+    </form>
+{% else %}
+    <p><a href="{{ url_for('login') }}">Login</a> to bookmark this car.</p>
+{% endif %}
+
 {% endblock %}

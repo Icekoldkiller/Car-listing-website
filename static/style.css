@@ -337,3 +337,21 @@ a.button-link {
 a.button-link:hover {
     background-color: #1e7e34;
 }
+.filter-form {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.search-input, .brand-dropdown, .filter-btn {
+    padding: 8px;
+    border-radius: 8px;
+    border: none;
+    font-size: 14px;
+}
+
+.filter-btn {
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+}

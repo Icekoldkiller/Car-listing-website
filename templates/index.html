@@ -1,27 +1,30 @@
 {% extends "layout.html" %}
 
 {% block content %}
-<h1 class="title"> nurburgring Motors</h1>
-
+<h1 class="title">Nürburgring Motors</h1>
 
 <div class="car-list">
-    {% for car in cars %}
-    <div class="car-card">
-        <img src="{{ url_for('static', filename='images/' + car.image) }}" alt="Car Image">
-        <div class="details">
-            <h2>
-                <a href="{{ url_for('car_detail', car_id=car.id) }}" style="color: white;">
-                    {{ car.brand }} {{ car.model }}
-                </a>
-            </h2>
-            <p><strong>Price:</strong> ${{ car.price }}</p>
-            <p><strong>Mileage:</strong> {{ car.mileage }}</p>
-            <p><strong>Year:</strong> {{ car.year }}</p>
-            <p><strong>Fuel Type:</strong> {{ car.fuel }}</p>
-            <p><strong>Condition:</strong> {{ car.condition }}</p>
-            <a href="{{ url_for('add_to_cart', car_id=car.id) }}" class="cart-btn">Add to Cart</a>
+    {% if cars %}
+        {% for car in cars %}
+        <div class="car-card">
+            <img src="{{ url_for('static', filename='images/' + car.image) }}" alt="Car Image">
+            <div class="details">
+                <h2>
+                    <a href="{{ url_for('car_detail', car_id=car.id) }}" style="color: white;">
+                        {{ car.brand }} {{ car.model }}
+                    </a>
+                </h2>
+                <p><strong>Price:</strong> ${{ car.price }}</p>
+                <p><strong>Mileage:</strong> {{ car.mileage }}</p>
+                <p><strong>Year:</strong> {{ car.year }}</p>
+                <p><strong>Fuel Type:</strong> {{ car.fuel }}</p>
+                <p><strong>Condition:</strong> {{ car.condition }}</p>
+                <a href="{{ url_for('add_to_cart', car_id=car.id) }}" class="cart-btn">Add to Cart</a>
+            </div>
         </div>
-    </div>
-    {% endfor %}
+        {% endfor %}
+    {% else %}
+        <p style="color: white;">No cars found.</p>
+    {% endif %}
 </div>
 {% endblock %}
