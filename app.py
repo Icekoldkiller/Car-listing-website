@@ -6,7 +6,7 @@ import os
 
 app = Flask(__name__)
 app.secret_key = 'supersecret'
-migrate = Migrate(app, db)
+
 
 # Database setup
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///cars.db'
