@@ -77,23 +77,21 @@
             {% endif %}
         </div>
 
-        <!-- 👉 Right side search & filter -->
-        <div class="nav-right">
-            <form action="{{ url_for('index') }}" method="get">
-                <select name="brand" onchange="this.form.submit()" class="dropbtn">
-                    <option disabled selected>Filter Cars</option>
-                    <option value="Toyota">Toyota</option>
-                    <option value="Nissan">Nissan</option>
-                    <option value="Diesel">Diesel</option>
-                    <option value="Used">Used</option>
-                </select>
-            </form>
+        <!-- 👉 Combined search & filter -->
+<div class="nav-right">
+    <form action="{{ url_for('index') }}" method="get" style="display: flex; align-items: center;">
+    <select name="brand" onchange="this.form.submit()" class="dropbtn">
+        <option value="">All Brands</option>
+        {% for brand in brands %}
+            <option value="{{ brand }}" {% if request.args.get('brand') == brand %}selected{% endif %}>{{ brand }}</option>
+        {% endfor %}
+    </select>
 
-            <form action="{{ url_for('index') }}" method="get">
-                <input type="text" name="search" placeholder="Search cars..." required>
-                <button type="submit">Search</button>
-            </form>
-        </div>
+    <input type="text" name="search" placeholder="Search cars..." value="{{ request.args.get('search', '') }}" style="margin-left: 10px;">
+    <button type="submit">Search</button>
+</form>
+</div>
+
     </div>
 
     <div class="container">

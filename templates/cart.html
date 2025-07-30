@@ -15,6 +15,8 @@
     </tr>
     {% for item in items %}
     <tr>
+        {% if item.car %}
+        <!-- Logged-in user (CartItem object with car relationship) -->
         <td><img src="{{ url_for('static', filename='uploads/' ~ item.car.image) }}" width="100"></td>
         <td>{{ item.car.brand }} {{ item.car.model }}</td>
         <td>${{ item.car.price }}</td>
@@ -33,6 +35,27 @@
                 <button type="submit">Remove</button>
             </form>
         </td>
+        {% else %}
+        <!-- Guest user (dictionary from session) -->
+        <td><img src="{{ url_for('static', filename='uploads/' ~ item.image) }}" width="100"></td>
+        <td>{{ item.brand }} {{ item.model }}</td>
+        <td>${{ item.price }}</td>
+        <td>{{ item.quantity }}</td>
+        <td>${{ item.price * item.quantity }}</td>
+        <td>
+            <form action="{{ url_for('update_quantity', car_id=item.id) }}" method="post" style="display:inline;">
+                <input type="hidden" name="action" value="increase">
+                <button type="submit">+</button>
+            </form>
+            <form action="{{ url_for('update_quantity', car_id=item.id) }}" method="post" style="display:inline;">
+                <input type="hidden" name="action" value="decrease">
+                <button type="submit">-</button>
+            </form>
+            <form action="{{ url_for('remove_from_cart', car_id=item.id) }}" method="post" style="display:inline;">
+                <button type="submit">Remove</button>
+            </form>
+        </td>
+        {% endif %}
     </tr>
     {% endfor %}
 </table>

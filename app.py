@@ -7,12 +7,13 @@ import os
 
 app = Flask(__name__)
 app.secret_key = 'supersecret'
-migrate = Migrate(app, db)
+
 
 # Database setup
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///cars.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
 # Image upload config
 UPLOAD_FOLDER = 'static/images'
@@ -86,7 +87,6 @@ def index():
         cars = cars.filter(
             (Car.brand.ilike(f'%{search_query}%')) |
             (Car.model.ilike(f'%{search_query}%')) |
-            (Car.fuel_type.ilike(f'%{search_query}%')) |
             (Car.condition.ilike(f'%{search_query}%'))
         )
 
@@ -116,15 +116,16 @@ def add_car():
             return "Invalid image file!"
 
         new_car = Car(
-            model=request.form['model'],
-            mileage=request.form['mileage'],
-            year=int(request.form['year']),
-            brand=request.form['brand'],
-            fuel=request.form['fuel'],
-            condition=request.form['condition'],
-            price=float(request.form['price']),
-            image=filename
+           model=request.form.get('model', ''),
+           mileage=request.form.get('mileage', ''),
+           year=int(request.form.get('year', 0)),
+           brand=request.form.get('brand', ''),
+           fuel_type=request.form.get('fuel_type', ''),
+           condition=request.form.get('condition', ''),
+           price=float(request.form.get('price', 0)),
+           image=filename
         )
+
         db.session.add(new_car)
         db.session.commit()
         return redirect(url_for('index'))
@@ -263,15 +264,19 @@ def add_to_cart(car_id):
 
 @app.route('/remove_from_cart/<int:car_id>', methods=['POST'])
 def remove_from_cart(car_id):
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
+    if 'user_id' in session:
+        # Logged-in user — remove from database
+        item = CartItem.query.filter_by(user_id=session['user_id'], car_id=car_id).first()
+        if item:
+            db.session.delete(item)
+            db.session.commit()
+    else:
+        # Guest user — remove from session cart
+        cart = session.get('cart', [])
+        updated_cart = [item for item in cart if item.get('id') != car_id]
+        session['cart'] = updated_cart
 
-    item = CartItem.query.filter_by(user_id=session['user_id'], car_id=car_id).first()
-    if item:
-        db.session.delete(item)
-        db.session.commit()
     return redirect(url_for('cart'))
-
 
 @app.route('/cart')
 def cart():

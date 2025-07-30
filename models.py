@@ -1,6 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 
+
 db = SQLAlchemy()
 
 class User(db.Model):
@@ -23,7 +24,7 @@ class Car(db.Model):
     mileage = db.Column(db.Integer, nullable=False)
     year = db.Column(db.Integer, nullable=False)
     brand = db.Column(db.String(50), nullable=False)
-    fuel = db.Column(db.String(50), nullable=False)
+    fuel_type = db.Column(db.String(50), nullable=False)
     condition = db.Column(db.String(50), nullable=False)
     image = db.Column(db.String(100), nullable=True)
     price = db.Column(db.Float, nullable=False)
