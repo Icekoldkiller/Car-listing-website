@@ -21,7 +21,7 @@
             gap: 15px;
         }
 
-        .nav-links a, .nav-links form, .nav-links button {
+        .nav-links a {
             color: white;
             text-decoration: none;
             margin: 0 5px;
@@ -50,53 +50,115 @@
         .container {
             padding: 20px;
         }
+
+        .nav-profile-pic {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid white;
+            aspect-ratio: 1 / 1;
+            cursor: pointer;
+        }
+
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            background-color: #444;
+            min-width: 120px;
+            box-shadow: 0px 8px 16px rgba(0,0,0,0.2);
+            z-index: 1;
+            border-radius: 6px;
+        }
+
+        .dropdown-content a {
+            color: white;
+            padding: 10px 12px;
+            text-decoration: none;
+            display: block;
+            border-bottom: 1px solid #555;
+        }
+
+        .dropdown-content a:last-child {
+            border-bottom: none;
+        }
+
+        .dropdown-content a:hover {
+            background-color: #555;
+        }
     </style>
 </head>
 <body>
 
-    <div class="navbar">
-        <!-- 👈 Left side links -->
-        <div class="nav-left nav-links">
-            <a href="{{ url_for('index') }}">Home</a>
-            <a href="{{ url_for('cart') }}">Cart</a>
-            <a href="{{ url_for('orders') }}">Order History</a>
+<div class="navbar">
+    <!-- Left side -->
+    <div class="nav-left nav-links">
+        <a href="{{ url_for('index') }}">Home</a>
+        <a href="{{ url_for('cart') }}">Cart</a>
+        <a href="{{ url_for('orders') }}">Order History</a>
 
-            {% if session.get('username') %}
-                <a href="{{ url_for('profile') }}">Profile</a>
-                <a href="{{ url_for('logout_user') }}">Logout</a>
-            {% else %}
-                <a href="{{ url_for('login') }}">Login</a>
-                <a href="{{ url_for('register') }}">Register</a>
-            {% endif %}
+        {% if session.get('admin_logged_in') and not session.get('username') %}
+            <a href="{{ url_for('admin') }}">Admin</a>
+            <a href="{{ url_for('logout_admin') }}">Logout</a>
+        {% elif not session.get('username') %}
+            <a href="{{ url_for('admin_login') }}">Admin Login</a>
+        {% endif %}
+    </div>
 
-            {% if session.get('admin_logged_in') and not session.get('username') %}
-                <a href="{{ url_for('admin') }}">Admin</a>
-                <a href="{{ url_for('logout_admin') }}">Logout</a>
-            {% elif not session.get('username') %}
-                <a href="{{ url_for('admin_login') }}">Admin Login</a>
-            {% endif %}
-        </div>
+    <!-- Right side -->
+    <div class="nav-right">
+        <form action="{{ url_for('index') }}" method="get" style="display: flex; align-items: center;">
+            <select name="brand" onchange="this.form.submit()" class="dropbtn">
+                <option value="">All Brands</option>
+                {% for brand in brands %}
+                    <option value="{{ brand }}" {% if request.args.get('brand') == brand %}selected{% endif %}>{{ brand }}</option>
+                {% endfor %}
+            </select>
 
-        <!-- 👉 Combined search & filter -->
-<div class="nav-right">
-    <form action="{{ url_for('index') }}" method="get" style="display: flex; align-items: center;">
-    <select name="brand" onchange="this.form.submit()" class="dropbtn">
-        <option value="">All Brands</option>
-        {% for brand in brands %}
-            <option value="{{ brand }}" {% if request.args.get('brand') == brand %}selected{% endif %}>{{ brand }}</option>
-        {% endfor %}
-    </select>
+            <input type="text" name="search" placeholder="Search cars..." value="{{ request.args.get('search', '') }}">
+            <button type="submit">Search</button>
+        </form>
 
-    <input type="text" name="search" placeholder="Search cars..." value="{{ request.args.get('search', '') }}" style="margin-left: 10px;">
-    <button type="submit">Search</button>
-</form>
+        {% if session.get('username') %}
+            <div class="dropdown">
+                <img src="{% if current_user.profile_pic %}{{ url_for('static', filename='profile_pics/' + current_user.profile_pic) }}{% else %}{{ url_for('static', filename='profile_pics/default.png') }}{% endif %}" alt="Profile Picture" class="nav-profile-pic" onclick="toggleDropdown()">
+                <div class="dropdown-content" id="profileDropdown">
+                    <a href="{{ url_for('profile') }}">Profile</a>
+                    <a href="{{ url_for('logout_user') }}">Logout</a>
+                </div>
+            </div>
+        {% else %}
+            <a href="{{ url_for('login') }}">Login</a>
+            <a href="{{ url_for('register') }}">Register</a>
+        {% endif %}
+    </div>
 </div>
 
-    </div>
+<div class="container">
+    {% block content %}{% endblock %}
+</div>
 
-    <div class="container">
-        {% block content %}{% endblock %}
-    </div>
+<script>
+function toggleDropdown() {
+    const dropdown = document.getElementById("profileDropdown");
+    dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+}
+
+window.onclick = function(event) {
+    if (!event.target.matches('.nav-profile-pic')) {
+        const dropdown = document.getElementById("profileDropdown");
+        if (dropdown && dropdown.style.display === "block") {
+            dropdown.style.display = "none";
+        }
+    }
+};
+</script>
 
 </body>
 </html>

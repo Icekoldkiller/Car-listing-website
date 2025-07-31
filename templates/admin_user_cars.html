@@ -1,0 +1,73 @@
+{% extends "layout.html" %}
+{% block content %}
+<h2>User Car Listings</h2>
+
+<table class="car-table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Image</th>
+            <th>Brand</th>
+            <th>Model</th>
+            <th>Year</th>
+            <th>Seller</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for car in user_listings %}
+        <tr>
+            <td>{{ car.id }}</td>
+            <td>
+                {% if car.image %}
+                    <img src="{{ url_for('static', filename='uploads/' ~ car.image) }}" alt="Car image" width="100">
+                {% else %}
+                    No Image
+                {% endif %}
+            </td>
+            <td>{{ car.brand }}</td>
+            <td>{{ car.model }}</td>
+            <td>{{ car.year }}</td>
+            <td>{{ car.seller.username if car.seller else 'Unknown' }}</td>
+            <td>
+                <form method="POST" action="{{ url_for('admin_delete_user_car', car_id=car.id) }}" onsubmit="return confirm('Are you sure you want to delete this car?');">
+                    <button type="submit" class="delete-btn">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<style>
+    .car-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        background-color: #111;
+        color: white;
+    }
+    .car-table th, .car-table td {
+        border: 1px solid #333;
+        padding: 10px;
+        text-align: center;
+    }
+    .car-table th {
+        background-color: #222;
+    }
+    .car-table img {
+        border-radius: 8px;
+    }
+    .delete-btn {
+        background-color: crimson;
+        color: white;
+        border: none;
+        padding: 6px 10px;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    .delete-btn:hover {
+        background-color: darkred;
+    }
+</style>
+{% endblock %}

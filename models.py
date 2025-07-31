@@ -8,6 +8,7 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True)
     password_hash = db.Column(db.String(120))
+    profile_pic = db.Column(db.String(120), nullable=True)  
 
     listed_cars = db.relationship('Car', back_populates='seller')
     orders = db.relationship('Order', backref='user')
@@ -24,7 +25,7 @@ class Car(db.Model):
     mileage = db.Column(db.Integer, nullable=False)
     year = db.Column(db.Integer, nullable=False)
     brand = db.Column(db.String(50), nullable=False)
-    fuel_type = db.Column(db.String(50), nullable=False)
+    fuel_type = db.Column(db.String(50), nullable=True)
     condition = db.Column(db.String(50), nullable=False)
     image = db.Column(db.String(100), nullable=True)
     price = db.Column(db.Float, nullable=False)

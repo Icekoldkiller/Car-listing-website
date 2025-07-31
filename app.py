@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import CartItem, Car, User,db
 from flask_migrate import Migrate
+from werkzeug.utils import secure_filename
 import os
 
 app = Flask(__name__)
@@ -19,6 +20,11 @@ migrate = Migrate(app, db)
 UPLOAD_FOLDER = 'static/images'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['PROFILE_PIC_FOLDER'] = os.path.join('static', 'profile_pics')
+upload_folder = os.path.join('static', 'profile_pics')
+os.makedirs(upload_folder, exist_ok=True)
+app.config['PROFILE_PIC_FOLDER'] = upload_folder
+
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -36,12 +42,13 @@ class Car(db.Model):
     mileage = db.Column(db.Integer, nullable=False)
     year = db.Column(db.Integer, nullable=False)
     brand = db.Column(db.String(50), nullable=False)
-    fuel_type = db.Column(db.String(50), nullable=False)
+    fuel_type = db.Column(db.String(50), nullable=True)
     condition = db.Column(db.String(50), nullable=False)
     image = db.Column(db.String(100), nullable=True)
     price = db.Column(db.Float, nullable=False)  
     seller_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     seller = db.relationship('User', back_populates='listed_cars')
+    profile_pic = db.Column(db.String(120), nullable=True)
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -377,15 +384,26 @@ def search():
     ).all()
     return render_template('search_results.html', cars=results, query=query)
 
-@app.route('/profile')
+@app.route('/profile', methods=['GET', 'POST'])
 def profile():
-    user_id = session.get('user_id')
-    if not user_id:
-        flash("You must be logged in to view your profile.")
+    if 'user_id' not in session:
         return redirect(url_for('login'))
 
-    user = User.query.get(user_id)
-    return render_template('profile.html', user=user, user_cars=user.listed_cars, bookmarks=user.bookmarked_cars)
+    user = User.query.get(session['user_id'])
+
+    if request.method == 'POST':
+        if 'profile_pic' in request.files:
+            file = request.files['profile_pic']
+            if file and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                user.profile_pic = filename
+                db.session.commit()
+                flash('Profile picture updated!', 'success')
+            else:
+                flash('Invalid file type!', 'danger')
+
+    return render_template('profile.html', user=user)
 
 @app.route('/orders')
 def orders():
@@ -477,10 +495,12 @@ def bookmark(car_id):
         user.bookmarked_cars.append(car)
         db.session.commit()
         flash("Car bookmarked!")
-    else:
-        flash("You’ve already bookmarked this car.")
+
+    # Update session to reflect bookmarks for UI feedback
+    session['bookmarked_ids'] = [c.id for c in user.bookmarked_cars]
 
     return redirect(url_for('car_detail', car_id=car_id))
+
 
 @app.route('/update_quantity/<int:car_id>', methods=['POST'])
 def update_quantity(car_id):
@@ -491,6 +511,62 @@ def update_quantity(car_id):
             item.quantity = quantity
             db.session.commit()
     return redirect(url_for('cart'))
+
+@app.route('/admin/user-listings')
+def admin_user_listings():
+    if 'admin_logged_in' not in session:
+        return redirect(url_for('admin_login'))
+
+    user_listings = Car.query.filter(Car.seller_id != None).all()
+    return render_template('admin_user_cars.html', user_listings=user_listings)
+
+@app.route('/admin/delete-user-car/<int:car_id>', methods=['POST'])
+def admin_delete_user_car(car_id):
+    if 'admin_logged_in' not in session:
+        return redirect(url_for('admin_login'))
+
+    car = Car.query.get_or_404(car_id)
+    db.session.delete(car)
+    db.session.commit()
+    flash('User listing deleted.')
+    return redirect(url_for('admin_user_listings'))
+
+@app.route('/admin/user-cars')
+def admin_user_cars():
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+
+    user_listed_cars = Car.query.filter(Car.seller_id.isnot(None)).all()
+    return render_template('admin_user_cars.html', user_listed_cars=user_listed_cars)
+
+@app.route('/upload_profile_pic', methods=['POST'])
+def upload_profile_pic():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    file = request.files.get('profile_pic')
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        filepath = os.path.join(app.config['PROFILE_PIC_FOLDER'], filename)
+        file.save(filepath)
+
+        user = User.query.get(session['user_id'])
+        user.profile_pic = filename
+        db.session.commit()
+
+        flash("Profile picture updated!", "success")
+    else:
+        flash("Invalid file format!", "danger")
+
+    return redirect(url_for('profile'))
+
+@app.context_processor
+def inject_user():
+    if 'user_id' in session:
+        user = User.query.get(session['user_id'])
+        return dict(current_user=user)
+    return dict(current_user=None)
+
 
 
 if __name__ == '__main__':

@@ -355,3 +355,30 @@ a.button-link:hover {
     color: white;
     cursor: pointer;
 }
+
+.custom-btn {
+    display: inline-block;
+    padding: 10px 20px;
+    background: linear-gradient(45deg, #005eff, #0f9dff);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: background 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+}
+
+.custom-btn:hover {
+    background: linear-gradient(45deg, #0f9dff, #005eff);
+    transform: translateY(-2px);
+}
+input[type="file"] {
+    margin-top: 10px;
+}
+
+img {
+    margin-bottom: 15px;
+    border: 2px solid #0f9dff;
+}

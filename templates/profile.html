@@ -2,7 +2,21 @@
 
 {% block content %}
 <h2>Welcome, {{ user.username }}</h2>
-<p>This is your profile page.</p>
+
+<!-- Profile Picture Section -->
+<div style="margin-bottom: 20px;">
+    {% if user.profile_pic %}
+        <img src="{{ url_for('static', filename='profile_pics/' + user.profile_pic) }}" alt="Profile Picture" width="120" style="border-radius: 50%;">
+    {% else %}
+        <p>No profile picture uploaded.</p>
+    {% endif %}
+</div>
+
+<!-- Upload Form -->
+<form method="POST" action="{{ url_for('upload_profile_pic') }}" enctype="multipart/form-data" style="margin-bottom: 30px;">
+    <input type="file" name="profile_pic" required>
+    <button type="submit" class="cart-btn">Upload Profile Picture</button>
+</form>
 
 <a href="{{ url_for('logout_user') }}" class="cart-btn">Log out</a>
 <a href="{{ url_for('add_car_user') }}" class="cart-btn" style="background-color: green; margin-bottom: 20px;">Add Car for Sale</a>
