@@ -130,8 +130,7 @@ def add_car():
            brand=request.form.get('brand', ''),
            fuel_type=request.form.get('fuel_type', ''),
            condition=request.form.get('condition', ''),
-           price=float(request.form.get('price', 0)),
-           seller_id=session['user_id']
+           price=float(request.form.get('price', 0)),           
            image=filename
         )
 
