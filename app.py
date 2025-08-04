@@ -49,11 +49,13 @@ class Car(db.Model):
     seller_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     seller = db.relationship('User', back_populates='listed_cars')
     profile_pic = db.Column(db.String(120), nullable=True)
+    
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True)
     password_hash = db.Column(db.String(120))
+    profile_pic = db.Column(db.String(120), nullable=True) 
 
     listed_cars = db.relationship('Car', back_populates='seller')
     bookmarked_cars = db.relationship('Car', secondary=bookmarks, backref='bookmarked_by')

@@ -6,11 +6,13 @@
 <!-- Profile Picture Section -->
 <div style="margin-bottom: 20px;">
     {% if user.profile_pic %}
+        <p>Filename: {{ user.profile_pic }}</p>
         <img src="{{ url_for('static', filename='profile_pics/' + user.profile_pic) }}" alt="Profile Picture" width="120" style="border-radius: 50%;">
     {% else %}
         <p>No profile picture uploaded.</p>
     {% endif %}
 </div>
+
 
 <!-- Upload Form -->
 <form method="POST" action="{{ url_for('upload_profile_pic') }}" enctype="multipart/form-data" style="margin-bottom: 30px;">
