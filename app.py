@@ -42,7 +42,7 @@ class Car(db.Model):
     mileage = db.Column(db.Integer, nullable=False)
     year = db.Column(db.Integer, nullable=False)
     brand = db.Column(db.String(50), nullable=False)
-    fuel_type = db.Column(db.String(50), nullable=True)
+    fuel = db.Column(db.String(50), nullable=True)
     condition = db.Column(db.String(50), nullable=False)
     image = db.Column(db.String(100), nullable=True)
     price = db.Column(db.Float, nullable=False)  
