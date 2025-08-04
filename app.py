@@ -42,7 +42,6 @@ class Car(db.Model):
     mileage = db.Column(db.Integer, nullable=False)
     year = db.Column(db.Integer, nullable=False)
     brand = db.Column(db.String(50), nullable=False)
-    fuel = db.Column(db.String(50), nullable=True)
     condition = db.Column(db.String(50), nullable=False)
     image = db.Column(db.String(100), nullable=True)
     price = db.Column(db.Float, nullable=False)  
@@ -454,7 +453,6 @@ def add_car_user():
         model = request.form['model']
         mileage = request.form['mileage']
         year = request.form['year']
-        fuel = request.form['fuel']
         condition = request.form['condition']
         price = request.form['price']
         image_file = request.files['image']
@@ -470,7 +468,6 @@ def add_car_user():
             model=model,
             mileage=mileage,
             year=year,
-            fuel=fuel,
             condition=condition,
             price=price,
             image=image_filename,
