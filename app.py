@@ -4,6 +4,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from models import CartItem, Car, User,db
 from flask_migrate import Migrate
 from werkzeug.utils import secure_filename
+from sqlalchemy.orm import joinedload
 import os
 
 app = Flask(__name__)
@@ -48,7 +49,7 @@ class Car(db.Model):
     price = db.Column(db.Float, nullable=False)  
     seller_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     seller = db.relationship('User', back_populates='listed_cars')
-    profile_pic = db.Column(db.String(120), nullable=True)
+    
     
 
 class User(db.Model):
@@ -133,6 +134,7 @@ def add_car():
            condition=request.form.get('condition', ''),
            price=float(request.form.get('price', 0)),
            image=filename
+           
         )
 
         db.session.add(new_car)
@@ -447,42 +449,51 @@ def confirm_checkout():
     flash('Order placed successfully!', 'success')
     return redirect(url_for('orders'))
 
+
 @app.route('/add_car_user', methods=['GET', 'POST'])
 def add_car_user():
+    if 'user_id' not in session:
+        flash('You must be logged in to add a car.', 'danger')
+        return redirect(url_for('login'))
+
     if request.method == 'POST':
         brand = request.form['brand']
         model = request.form['model']
         mileage = request.form['mileage']
         year = request.form['year']
-        fuel = request.form['fuel']
         condition = request.form['condition']
+        fuel_type = request.form['fuel_type']
         price = request.form['price']
-        image_file = request.files['image']
 
+        # File upload
+        image_file = request.files.get('image')
         image_filename = None
-        if image_file:
-            image_filename = image_file.filename
-            image_path = os.path.join(app.config['UPLOAD_FOLDER'], image_filename)
+        if image_file and image_file.filename != '':
+            filename = secure_filename(image_file.filename)
+            image_path = os.path.join(app.static_folder, 'uploads', filename)
             image_file.save(image_path)
+            image_filename = filename
 
-        car = Car(
+        # ✅ Set seller_id to the logged in user
+        new_car = Car(
             brand=brand,
             model=model,
             mileage=mileage,
             year=year,
-            fuel=fuel,
             condition=condition,
+            fuel_type=fuel_type,
             price=price,
             image=image_filename,
-            seller_id=session.get('user_id')  # FIXED
+            seller_id=session['user_id']  # ← this is the key line
         )
-        db.session.add(car)
+
+        db.session.add(new_car)
         db.session.commit()
+
         flash('Your car has been listed for sale!', 'success')
-        return redirect(url_for('profile'))
+        return redirect(url_for('index'))
 
     return render_template('add_car_user.html')
-
 
 @app.route('/bookmark/<int:car_id>', methods=['POST'])
 def bookmark(car_id):
@@ -519,7 +530,7 @@ def admin_user_listings():
     if 'admin_logged_in' not in session:
         return redirect(url_for('admin_login'))
 
-    user_listings = Car.query.filter(Car.seller_id != None).all()
+    user_listings = Car.query.options(joinedload(Car.seller)).filter(Car.seller_id != None).all()
     return render_template('admin_user_cars.html', user_listings=user_listings)
 
 @app.route('/admin/delete-user-car/<int:car_id>', methods=['POST'])
@@ -539,7 +550,7 @@ def admin_user_cars():
         return redirect(url_for('admin_login'))
 
     user_listed_cars = Car.query.filter(Car.seller_id.isnot(None)).all()
-    return render_template('admin_user_cars.html', user_listed_cars=user_listed_cars)
+    return render_template('admin_user_cars.html', user_listings_cars=user_listed_cars)
 
 @app.route('/upload_profile_pic', methods=['POST'])
 def upload_profile_pic():

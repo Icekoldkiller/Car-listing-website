@@ -7,7 +7,6 @@
         <h2>{{ car.brand }} {{ car.model }}</h2>
         <p><strong>Mileage:</strong> {{ car.mileage }}</p>
         <p><strong>Year:</strong> {{ car.year }}</p>
-        <p><strong>Fuel:</strong> {{ car.fuel }}</p>
         <p><strong>Condition:</strong> {{ car.condition }}</p>
         <p><strong>Price:</strong> ${{ "%.2f"|format(car.price) }}</p>
         <a href="{{ url_for('add_to_cart', car_id=car.id) }}" class="custom-btn">Add to Cart</a>
