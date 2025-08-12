@@ -43,7 +43,6 @@ class Car(db.Model):
     mileage = db.Column(db.Integer, nullable=False)
     year = db.Column(db.Integer, nullable=False)
     brand = db.Column(db.String(50), nullable=False)
-    fuel_type = db.Column(db.String(50), nullable=True)
     condition = db.Column(db.String(50), nullable=False)
     image = db.Column(db.String(100), nullable=True)
     price = db.Column(db.Float, nullable=False)  
@@ -132,7 +131,7 @@ def add_car():
            brand=request.form.get('brand', ''),
            fuel_type=request.form.get('fuel_type', ''),
            condition=request.form.get('condition', ''),
-           price=float(request.form.get('price', 0)),
+           price=float(request.form.get('price', 0)),           
            image=filename
            
         )
