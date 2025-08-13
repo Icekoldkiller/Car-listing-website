@@ -406,7 +406,14 @@ def profile():
             else:
                 flash('Invalid file type!', 'danger')
 
-    return render_template('profile.html', user=user)
+    # ✅ Access bookmarks directly
+    bookmarked_cars = user.bookmarked_cars
+
+    return render_template(
+        'profile.html',
+        user=user,
+        bookmarked_cars=bookmarked_cars
+    )
 
 @app.route('/orders')
 def orders():
@@ -461,7 +468,6 @@ def add_car_user():
         mileage = request.form['mileage']
         year = request.form['year']
         condition = request.form['condition']
-        fuel_type = request.form['fuel_type']
         price = request.form['price']
 
         # File upload
@@ -480,7 +486,6 @@ def add_car_user():
             mileage=mileage,
             year=year,
             condition=condition,
-            fuel_type=fuel_type,
             price=price,
             image=image_filename,
             seller_id=session['user_id']  # ← this is the key line
@@ -497,22 +502,27 @@ def add_car_user():
 @app.route('/bookmark/<int:car_id>', methods=['POST'])
 def bookmark(car_id):
     if 'user_id' not in session:
-        flash("You must log in to bookmark cars.")
+        flash("You must log in to bookmark cars.", "danger")
         return redirect(url_for('login'))
 
     user = User.query.get(session['user_id'])
     car = Car.query.get_or_404(car_id)
 
-    if car not in user.bookmarked_cars:
+    if car in user.bookmarked_cars:
+        # Remove bookmark
+        user.bookmarked_cars.remove(car)
+        flash("Bookmark removed.", "info")
+    else:
+        # Add bookmark
         user.bookmarked_cars.append(car)
-        db.session.commit()
-        flash("Car bookmarked!")
+        flash("Car bookmarked!", "success")
 
-    # Update session to reflect bookmarks for UI feedback
+    db.session.commit()
+
+    # Keep session updated
     session['bookmarked_ids'] = [c.id for c in user.bookmarked_cars]
 
     return redirect(url_for('car_detail', car_id=car_id))
-
 
 @app.route('/update_quantity/<int:car_id>', methods=['POST'])
 def update_quantity(car_id):
