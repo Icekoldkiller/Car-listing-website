@@ -24,23 +24,18 @@
 
 <hr>
 
-<h3>Your Listed Cars</h3>
-{% if user_cars %}
-    <div class="car-list">
-        {% for car in user_cars %}
+<h2>My Listed Cars</h2>
+{% if listed_cars %}
+<div class="car-container">
+    {% for car in listed_cars %}
         <div class="car-card">
-            <img src="{{ url_for('static', filename='car_images/' + car.image) }}" alt="Car Image" width="250">
-            <div class="details">
-                <h4>{{ car.brand }} {{ car.model }}</h4>
-                <p><strong>Year:</strong> {{ car.year }}</p>
-                <p><strong>Mileage:</strong> {{ car.mileage }}</p>
-                <p><strong>Condition:</strong> {{ car.condition }}</p>
-                <p><strong>Price:</strong> ${{ "%.2f"|format(car.price) }}</p>
-                <a href="{{ url_for('car_detail', car_id=car.id) }}" class="cart-btn">View</a>
-            </div>
+            <img src="{{ url_for('static', filename='uploads/' + car.image) }}" alt="Car Image">
+            <h3>{{ car.brand }} {{ car.model }}</h3>
+            <p>Price: ${{ car.price }}</p>
+            <p>Condition: {{ car.condition }}</p>
         </div>
-        {% endfor %}
-    </div>
+    {% endfor %}
+</div>
 {% else %}
     <p>You haven't listed any cars yet.</p>
 {% endif %}
@@ -49,8 +44,8 @@
 
 <h3>My Bookmarked Cars</h3>
 {% if user.bookmarked_cars %}
-    <div class="car-list">
-        {% for car in user.bookmarked_cars %}
+<div class="car-container">
+    {% for car in user.bookmarked_cars %}
         <div class="car-card">
             <img src="{{ url_for('static', filename='images/' + car.image) }}" alt="{{ car.brand }} {{ car.model }}">
             <div class="details">
@@ -64,8 +59,8 @@
                 </form>
             </div>
         </div>
-        {% endfor %}
-    </div>
+    {% endfor %}
+</div>
 {% else %}
     <p>You have no bookmarked cars yet.</p>
 {% endif %}

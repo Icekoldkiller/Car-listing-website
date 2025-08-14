@@ -409,10 +409,14 @@ def profile():
     # ✅ Access bookmarks directly
     bookmarked_cars = user.bookmarked_cars
 
+    # ✅ Get the cars the user has listed
+    listed_cars = Car.query.filter_by(seller_id=user.id).all()
+
     return render_template(
         'profile.html',
         user=user,
-        bookmarked_cars=bookmarked_cars
+        bookmarked_cars=bookmarked_cars,
+        listed_cars=listed_cars
     )
 
 @app.route('/orders')
@@ -475,7 +479,7 @@ def add_car_user():
         image_filename = None
         if image_file and image_file.filename != '':
             filename = secure_filename(image_file.filename)
-            image_path = os.path.join(app.static_folder, 'uploads', filename)
+            image_path = os.path.join(app.static_folder, 'images', filename)
             image_file.save(image_path)
             image_filename = filename
 
@@ -534,13 +538,21 @@ def update_quantity(car_id):
             db.session.commit()
     return redirect(url_for('cart'))
 
-@app.route('/admin/user-listings')
+@app.route('/admin/user_listings')
 def admin_user_listings():
-    if 'admin_logged_in' not in session:
-        return redirect(url_for('admin_login'))
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
 
-    user_listings = Car.query.options(joinedload(Car.seller)).filter(Car.seller_id != None).all()
-    return render_template('admin_user_cars.html', user_listings=user_listings)
+    current_user = User.query.get(session['user_id'])
+    if not current_user.is_admin:
+        flash("You don't have permission to view this page.", "danger")
+        return redirect(url_for('index'))
+
+    # Fetch all cars with their sellers
+    user_listings = Car.query.all()
+
+    return render_template("admin_user_listings.html", user_listings=user_listings)
+
 
 @app.route('/admin/delete-user-car/<int:car_id>', methods=['POST'])
 def admin_delete_user_car(car_id):
