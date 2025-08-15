@@ -8,7 +8,8 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True)
     password_hash = db.Column(db.String(120))
-    profile_pic = db.Column(db.String(120), nullable=True)  
+    profile_pic = db.Column(db.String(120), nullable=True)
+    is_admin = db.Column(db.Boolean, default=False)  
 
     listed_cars = db.relationship('Car', back_populates='seller')
     orders = db.relationship('Order', backref='user')

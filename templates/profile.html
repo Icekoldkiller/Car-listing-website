@@ -29,7 +29,7 @@
 <div class="car-container">
     {% for car in listed_cars %}
         <div class="car-card">
-            <img src="{{ url_for('static', filename='uploads/' + car.image) }}" alt="Car Image">
+            <img src="{{ url_for('static', filename='images/' + car.image) }}" alt="Car Image">
             <h3>{{ car.brand }} {{ car.model }}</h3>
             <p>Price: ${{ car.price }}</p>
             <p>Condition: {{ car.condition }}</p>

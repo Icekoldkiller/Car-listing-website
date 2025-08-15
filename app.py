@@ -55,7 +55,9 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True)
     password_hash = db.Column(db.String(120))
-    profile_pic = db.Column(db.String(120), nullable=True) 
+    profile_pic = db.Column(db.String(120), nullable=True)
+    is_admin = db.Column(db.Boolean, default=False)  
+ 
 
     listed_cars = db.relationship('Car', back_populates='seller')
     bookmarked_cars = db.relationship('Car', secondary=bookmarks, backref='bookmarked_by')
@@ -548,8 +550,13 @@ def admin_user_listings():
         flash("You don't have permission to view this page.", "danger")
         return redirect(url_for('index'))
 
-    # Fetch all cars with their sellers
-    user_listings = Car.query.all()
+    # ✅ Fetch only cars listed by normal users (non-admins)
+    user_listings = (
+        Car.query
+        .join(User, Car.seller_id == User.id)
+        .filter(User.is_admin == False)  # exclude admin cars
+        .all()
+    )
 
     return render_template("admin_user_listings.html", user_listings=user_listings)
 
@@ -571,7 +578,7 @@ def admin_user_cars():
         return redirect(url_for('admin_login'))
 
     user_listed_cars = Car.query.filter(Car.seller_id.isnot(None)).all()
-    return render_template('admin_user_cars.html', user_listings_cars=user_listed_cars)
+    return render_template('admin_user_cars.html', user_listings=user_listed_cars)
 
 @app.route('/upload_profile_pic', methods=['POST'])
 def upload_profile_pic():

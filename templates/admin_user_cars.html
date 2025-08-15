@@ -20,7 +20,7 @@
             <td>{{ car.id }}</td>
             <td>
                 {% if car.image %}
-                    <img src="{{ url_for('static', filename='uploads/' ~ car.image) }}" alt="Car image" width="100">
+                    <img src="{{ url_for('static', filename='images/' ~ car.image) }}" alt="Car image" width="100">
                 {% else %}
                     No Image
                 {% endif %}
