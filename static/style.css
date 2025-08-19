@@ -403,3 +403,17 @@ img {
     object-fit: cover;
     border-radius: 8px;
 }
+.action-btn {
+        display: inline-block;
+        padding: 6px 12px;
+        background: #444;
+        color: white;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 14px;
+        transition: background 0.3s, transform 0.2s;
+    }
+    .action-btn:hover {
+        background: #666;
+        transform: scale(1.05);
+    }

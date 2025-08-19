@@ -561,6 +561,7 @@ def admin_user_listings():
     return render_template("admin_user_listings.html", user_listings=user_listings)
 
 
+
 @app.route('/admin/delete-user-car/<int:car_id>', methods=['POST'])
 def admin_delete_user_car(car_id):
     if 'admin_logged_in' not in session:
@@ -607,6 +608,20 @@ def inject_user():
         user = User.query.get(session['user_id'])
         return dict(current_user=user)
     return dict(current_user=None)
+
+@app.route('/admin/user/<int:user_id>/listings')
+def admin_specific_user_listings(user_id):
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+
+    selected_user = User.query.get_or_404(user_id)
+    user_listings = Car.query.filter_by(seller_id=selected_user.id).all()
+
+    return render_template(
+        "admin_specific_user_listings.html",
+        selected_user=selected_user,
+        user_listings=user_listings
+    )
 
 
 
