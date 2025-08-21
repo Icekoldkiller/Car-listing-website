@@ -317,8 +317,15 @@ def cart():
 
 @app.route('/clear-cart')
 def clear_cart():
-    session.pop('cart', None)
-    return redirect(url_for('cart_page'))
+    if 'user_id' in session:
+        # Logged-in user: clear DB cart
+        CartItem.query.filter_by(user_id=session['user_id']).delete()
+        db.session.commit()
+    else:
+        # Guest user: clear session cart
+        session.pop('cart', None)
+
+    return redirect(url_for('cart'))
 
 @app.route('/checkout')
 def checkout():
@@ -367,14 +374,26 @@ def register():
         username = request.form['username']
         password = request.form['password']
 
-        if User.query.filter_by(username=username).first():
-            return "User already exists."
+        # Clear any existing session (prevents "cross-user" issues)
+        session.clear()
 
+        # Check if user already exists
+        if User.query.filter_by(username=username).first():
+            flash("User already exists. Please choose another username.", "danger")
+            return redirect(url_for('register'))
+
+        # Create new user
         user = User(username=username)
         user.set_password(password)
         db.session.add(user)
         db.session.commit()
-        return redirect(url_for('login'))
+
+        # Log in the new user automatically
+        session['user_id'] = user.id
+        session['username'] = user.username
+
+        flash("Account created successfully!", "success")
+        return redirect(url_for('index'))  # send them to homepage
 
     return render_template('register.html')
 
@@ -532,13 +551,30 @@ def bookmark(car_id):
 
 @app.route('/update_quantity/<int:car_id>', methods=['POST'])
 def update_quantity(car_id):
+    action = request.form.get('action')
+
     if 'user_id' in session:
-        quantity = int(request.form.get('quantity', 1))
+        # Logged-in user: update in DB
         item = CartItem.query.filter_by(user_id=session['user_id'], car_id=car_id).first()
         if item:
-            item.quantity = quantity
+            if action == "increase":
+                item.quantity += 1
+            elif action == "decrease" and item.quantity > 1:
+                item.quantity -= 1
             db.session.commit()
+    else:
+        # Guest user: update session cart
+        cart = session.get('cart', [])
+        for entry in cart:
+            if entry['car_id'] == car_id:
+                if action == "increase":
+                    entry['quantity'] += 1
+                elif action == "decrease" and entry['quantity'] > 1:
+                    entry['quantity'] -= 1
+        session['cart'] = cart
+
     return redirect(url_for('cart'))
+
 
 @app.route('/admin/user_listings')
 def admin_user_listings():

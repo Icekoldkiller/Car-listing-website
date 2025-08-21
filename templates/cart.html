@@ -1,70 +1,93 @@
-{% extends 'layout.html' %}
-
+{% extends "layout.html" %}
 {% block content %}
-<h1 class="title">Your Cart</h1>
+<h2>Your Cart</h2>
 
 {% if items %}
 <table class="cart-table">
-    <tr>
-        <th>Image</th>
-        <th>Car</th>
-        <th>Price</th>
-        <th>Quantity</th>
-        <th>Subtotal</th>
-        <th>Actions</th>
-    </tr>
-    {% for item in items %}
-    <tr>
-        {% if item.car %}
-        <!-- Logged-in user (CartItem object with car relationship) -->
-        <td><img src="{{ url_for('static', filename='uploads/' ~ item.car.image) }}" width="100"></td>
-        <td>{{ item.car.brand }} {{ item.car.model }}</td>
-        <td>${{ item.car.price }}</td>
-        <td>{{ item.quantity }}</td>
-        <td>${{ item.car.price * item.quantity }}</td>
-        <td>
-            <form action="{{ url_for('update_quantity', car_id=item.car.id) }}" method="post" style="display:inline;">
-                <input type="hidden" name="action" value="increase">
-                <button type="submit">+</button>
-            </form>
-            <form action="{{ url_for('update_quantity', car_id=item.car.id) }}" method="post" style="display:inline;">
-                <input type="hidden" name="action" value="decrease">
-                <button type="submit">-</button>
-            </form>
-            <form action="{{ url_for('remove_from_cart', car_id=item.car.id) }}" method="post" style="display:inline;">
-                <button type="submit">Remove</button>
-            </form>
-        </td>
-        {% else %}
-        <!-- Guest user (dictionary from session) -->
-        <td><img src="{{ url_for('static', filename='uploads/' ~ item.image) }}" width="100"></td>
-        <td>{{ item.brand }} {{ item.model }}</td>
-        <td>${{ item.price }}</td>
-        <td>{{ item.quantity }}</td>
-        <td>${{ item.price * item.quantity }}</td>
-        <td>
-            <form action="{{ url_for('update_quantity', car_id=item.id) }}" method="post" style="display:inline;">
-                <input type="hidden" name="action" value="increase">
-                <button type="submit">+</button>
-            </form>
-            <form action="{{ url_for('update_quantity', car_id=item.id) }}" method="post" style="display:inline;">
-                <input type="hidden" name="action" value="decrease">
-                <button type="submit">-</button>
-            </form>
-            <form action="{{ url_for('remove_from_cart', car_id=item.id) }}" method="post" style="display:inline;">
-                <button type="submit">Remove</button>
-            </form>
-        </td>
-        {% endif %}
-    </tr>
-    {% endfor %}
+    <thead>
+        <tr>
+            <th>Car</th>
+            <th>Price</th>
+            <th>Quantity</th>
+            <th>Total</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in items %}
+        {% set car = item.car if item.car is defined else item['car'] %}
+        {% set quantity = item.quantity if item.quantity is defined else item['quantity'] %}
+
+        <tr>
+            <td>
+                {% if car.image %}
+                    <img src="{{ url_for('static', filename='images/' ~ car.image) }}" alt="Car image" width="100">
+                {% else %}
+                    No Image
+                {% endif %}
+                <br>{{ car.brand }} {{ car.model }} ({{ car.year }})
+            </td>
+            <td>${{ "%.2f"|format(car.price) }}</td>
+            <td>
+                <!-- Decrease button -->
+                <form method="POST" action="{{ url_for('update_quantity', car_id=car.id) }}" style="display:inline;">
+                    <input type="hidden" name="action" value="decrease">
+                    <button type="submit">-</button>
+                </form>
+                {{ quantity }}
+                <!-- Increase button -->
+                <form method="POST" action="{{ url_for('update_quantity', car_id=car.id) }}" style="display:inline;">
+                    <input type="hidden" name="action" value="increase">
+                    <button type="submit">+</button>
+                </form>
+            </td>
+            <td>${{ "%.2f"|format(car.price * quantity) }}</td>
+            <td>
+                <form method="POST" action="{{ url_for('remove_from_cart', car_id=car.id) }}">
+                    <button type="submit" class="remove-btn">Remove</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
 </table>
 
-<h2>Total: ${{ total }}</h2>
+<p><strong>Total: ${{ "%.2f"|format(total) }}</strong></p>
 
-<a href="{{ url_for('checkout') }}" class="cart-btn">Proceed to Checkout</a>
+<a href="{{ url_for('clear_cart') }}" class="clear-btn">Clear Cart</a>
+<a href="{{ url_for('checkout') }}" class="checkout-btn">Proceed to Checkout</a>
 
 {% else %}
 <p>Your cart is empty.</p>
 {% endif %}
+
+<style>
+    .cart-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        background: #111;
+        color: white;
+    }
+    .cart-table th, .cart-table td {
+        border: 1px solid #333;
+        padding: 10px;
+        text-align: center;
+    }
+    .cart-table th {
+        background: #222;
+    }
+    .remove-btn, .clear-btn, .checkout-btn, button {
+        padding: 6px 12px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    .remove-btn { background: crimson; color: white; }
+    .remove-btn:hover { background: darkred; }
+    .clear-btn { background: orange; color: black; margin-right: 10px; }
+    .clear-btn:hover { background: darkorange; }
+    .checkout-btn { background: limegreen; color: white; }
+    .checkout-btn:hover { background: green; }
+</style>
 {% endblock %}
