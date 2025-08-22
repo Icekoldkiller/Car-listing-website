@@ -6,7 +6,9 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
         .navbar {
-            background-color: #222;
+            background: rgba(20, 20, 20, 0.7); /* 🔑 semi-transparent */
+            backdrop-filter: blur(10px);       /* 🔑 glass blur */
+            -webkit-backdrop-filter: blur(10px);
             color: white;
             padding: 10px 20px;
             display: flex;
@@ -14,20 +16,23 @@
             align-items: center;
             flex-wrap: wrap;
 
-            /* 🔑 Sticky fix */
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             z-index: 1000;
-            box-shadow: 0px 2px 8px rgba(0,0,0,0.4);
+            box-shadow: 0px 2px 10px rgba(0,0,0,0.6);
+
+            box-sizing: border-box;
+            padding-right: 40px; /* ✅ room for scrollbar */
         }
 
         body {
             margin: 0;
-            padding-top: 70px; /* 🔑 prevent content hiding under navbar */
+            padding-top: 70px; /* Prevents content from hiding */
             background-color: #000;
             color: white;
+            font-family: Arial, sans-serif;
         }
 
         .nav-left, .nav-right {
@@ -40,26 +45,51 @@
             color: white;
             text-decoration: none;
             margin: 0 5px;
+            transition: color 0.3s ease;
         }
 
         .nav-links a:hover {
-            text-decoration: underline;
+            color: #1e90ff;
         }
 
         .nav-right form input[type="text"],
         .nav-right form select {
             padding: 5px;
             margin-left: 10px;
+            border-radius: 5px;
+            border: 1px solid #444;
+            background: rgba(40,40,40,0.8); /* ✅ dark glass */
+            color: white;
+            outline: none;
+        }
+
+        .nav-right form select option {
+            background: #222; /* ✅ dark dropdown menu */
+            color: white;
         }
 
         .nav-right form button {
-            padding: 5px 10px;
+            padding: 5px 12px;
+            margin-left: 5px;
+            border: none;
+            border-radius: 5px;
+            background: #1e90ff;
+            color: rgba(239, 240, 241, 0.884);
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .nav-right form button:hover {
+            background: #4682b4;
         }
 
         .dropbtn {
-            background-color: #333;
+            background: transparent;
             color: white;
-            border: none;
+            border: 1px solid #555;
+            border-radius: 5px;
+            padding: 5px;
+            cursor: pointer;
         }
 
         .container {
@@ -74,6 +104,11 @@
             border: 2px solid white;
             aspect-ratio: 1 / 1;
             cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .nav-profile-pic:hover {
+            transform: scale(1.1);
         }
 
         .dropdown {
@@ -85,19 +120,21 @@
             display: none;
             position: absolute;
             right: 0;
-            background-color: #444;
-            min-width: 120px;
-            box-shadow: 0px 8px 16px rgba(0,0,0,0.2);
+            background-color: rgba(40, 40, 40, 0.9);
+            backdrop-filter: blur(8px);
+            min-width: 140px;
+            box-shadow: 0px 8px 16px rgba(0,0,0,0.4);
             z-index: 1;
-            border-radius: 6px;
+            border-radius: 8px;
         }
 
         .dropdown-content a {
-            color: white;
-            padding: 10px 12px;
+            color: rgb(246, 248, 252);
+            padding: 10px 14px;
             text-decoration: none;
             display: block;
             border-bottom: 1px solid #555;
+            transition: background 0.3s ease;
         }
 
         .dropdown-content a:last-child {
@@ -105,7 +142,7 @@
         }
 
         .dropdown-content a:hover {
-            background-color: #555;
+            background-color: #1e90ff;
         }
     </style>
 </head>

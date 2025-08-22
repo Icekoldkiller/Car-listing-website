@@ -85,32 +85,33 @@ class CartItem(db.Model):
 
 # --- Routes ---
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/')
 def index():
-    cars = Car.query
+    page = request.args.get('page', 1, type=int)  # get current page (default = 1)
+    search = request.args.get('search', '')
+    brand = request.args.get('brand', '')
 
-    # Get search and filter values from form
-    search_query = request.args.get('search')
-    brand_filter = request.args.get('brand')
+    query = Car.query
 
-    # Apply search
-    if search_query:
-        cars = cars.filter(
-            (Car.brand.ilike(f'%{search_query}%')) |
-            (Car.model.ilike(f'%{search_query}%')) |
-            (Car.condition.ilike(f'%{search_query}%'))
-        )
+    if search:
+        query = query.filter(Car.model.ilike(f'%{search}%'))
+    if brand:
+        query = query.filter(Car.brand == brand)
 
-    # Apply filter by brand
-    if brand_filter and brand_filter != 'All':
-        cars = cars.filter_by(brand=brand_filter)
+    # ✅ Paginate: 8 cars per page
+    cars = query.paginate(page=page, per_page=8)
 
-    cars = cars.all()
+    # ✅ Unique brands for dropdown (sorted alphabetically)
+    brands = db.session.query(Car.brand).distinct().order_by(Car.brand.asc()).all()
+    brands = [b[0] for b in brands]
 
-    # Get list of unique brands for dropdown
-    brands = [b[0] for b in db.session.query(Car.brand).distinct().all()]
+    return render_template(
+        "index.html",
+        cars=cars,
+        brands=brands
+    )
 
-    return render_template('index.html', cars=cars, brands=brands)
+
 
 
 @app.route('/add', methods=['GET', 'POST'])
@@ -131,7 +132,6 @@ def add_car():
            mileage=request.form.get('mileage', ''),
            year=int(request.form.get('year', 0)),
            brand=request.form.get('brand', ''),
-           fuel_type=request.form.get('fuel_type', ''),
            condition=request.form.get('condition', ''),
            price=float(request.form.get('price', 0)),           
            image=filename
@@ -659,6 +659,38 @@ def admin_specific_user_listings(user_id):
         user_listings=user_listings
     )
 
+@app.route('/admin/delete-user/<int:user_id>', methods=['POST'])
+def admin_delete_user(user_id):
+    if 'admin_logged_in' not in session:
+        return redirect(url_for('admin_login'))
+
+    user = User.query.get_or_404(user_id)
+
+    # ✅ Prevent deleting admin accounts
+    if user.is_admin:
+        flash("You cannot delete an admin user!", "danger")
+        return redirect(url_for('admin_users'))
+
+    # ✅ Delete all related data
+
+    # Delete user's cart items
+    CartItem.query.filter_by(user_id=user.id).delete()
+
+    # Delete user's orders
+    Order.query.filter_by(user_id=user.id).delete()
+
+    # Clear bookmarks (many-to-many relationship)
+    user.bookmarked_cars.clear()
+
+    # Delete user's cars (listings)
+    Car.query.filter_by(seller_id=user.id).delete()
+
+    # Finally delete the user
+    db.session.delete(user)
+    db.session.commit()
+
+    flash(f"User '{user.username}' and all related data have been deleted.", "success")
+    return redirect(url_for('admin_users'))
 
 
 if __name__ == '__main__':

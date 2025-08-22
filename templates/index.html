@@ -4,8 +4,8 @@
 <h1 class="title">Nürburgring Motors</h1>
 
 <div class="car-list">
-    {% if cars %}
-        {% for car in cars %}
+    {% if cars.items %}
+        {% for car in cars.items %}
         <div class="car-card">
             <img src="{{ url_for('static', filename='images/' + car.image) }}" alt="Car Image">
             <div class="details">
@@ -15,7 +15,7 @@
                     </a>
                 </h2>
                 <p><strong>Price:</strong> ${{ car.price }}</p>
-                <p><strong>Mileage:</strong> {{ car.mileage }}</p>
+                <p><strong>Mileage:</strong> {{ car.mileage }} km</p>
                 <p><strong>Year:</strong> {{ car.year }}</p>
                 <p><strong>Condition:</strong> {{ car.condition }}</p>
                 <a href="{{ url_for('add_to_cart', car_id=car.id) }}" class="cart-btn">Add to Cart</a>
@@ -24,6 +24,19 @@
         {% endfor %}
     {% else %}
         <p style="color: white;">No cars found.</p>
+    {% endif %}
+</div>
+
+<!-- Pagination (only once at bottom) -->
+<div class="pagination">
+    {% if cars.has_prev %}
+        <a href="{{ url_for('index', page=cars.prev_num, brand=request.args.get('brand'), search=request.args.get('search')) }}" class="custom-btn">Previous</a>
+    {% endif %}
+
+    <span class="page-info">Page {{ cars.page }} of {{ cars.pages }}</span>
+
+    {% if cars.has_next %}
+        <a href="{{ url_for('index', page=cars.next_num, brand=request.args.get('brand'), search=request.args.get('search')) }}" class="custom-btn">Next</a>
     {% endif %}
 </div>
 {% endblock %}
