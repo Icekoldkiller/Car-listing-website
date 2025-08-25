@@ -285,7 +285,7 @@ def remove_from_cart(car_id):
     else:
         # Guest user — remove from session cart
         cart = session.get('cart', [])
-        updated_cart = [item for item in cart if item.get('id') != car_id]
+        updated_cart = [item for item in cart if item.get('car_id') != car_id]  # ✅ FIXED KEY
         session['cart'] = updated_cart
 
     return redirect(url_for('cart'))
