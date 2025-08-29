@@ -29,6 +29,7 @@ class Car(db.Model):
     condition = db.Column(db.String(50), nullable=False)
     image = db.Column(db.String(100), nullable=True)
     price = db.Column(db.Float, nullable=False)
+    images = db.relationship('CarImage', backref='car', lazy=True)
 
     seller_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     seller = db.relationship('User', back_populates='listed_cars')
@@ -47,3 +48,8 @@ class CartItem(db.Model):
     quantity = db.Column(db.Integer, nullable=False, default=1)
 
     car = db.relationship('Car')
+
+class CarImage(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    car_id = db.Column(db.Integer, db.ForeignKey('car.id'), nullable=False)
+    image = db.Column(db.String(255), nullable=False)

@@ -1,9 +1,93 @@
 {% extends "layout.html" %}
 
 {% block content %}
+<style>
+.carousel {
+    position: relative;
+    width: 100%;
+    max-width: 600px;
+    margin: auto;
+    overflow: hidden;
+    border-radius: 10px;
+}
+.carousel-item {
+    display: none;
+    text-align: center;
+}
+.carousel-item img {
+    width: 100%;
+    border-radius: 10px;
+}
+.carousel-controls {
+    position: absolute;
+    top: 50%;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    transform: translateY(-50%);
+    padding: 0 10px;
+    box-sizing: border-box;
+}
+.carousel-controls button {
+    background: rgba(0, 0, 0, 0.5);
+    border: none;
+    color: white;
+    font-size: 18px;
+    padding: 8px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+.carousel-controls button:hover {
+    background: rgba(0, 0, 0, 0.8);
+}
+.carousel-dots {
+    text-align: center;
+    margin-top: 10px;
+}
+.carousel-dot {
+    height: 12px;
+    width: 12px;
+    margin: 0 5px;
+    background-color: rgba(255,255,255,0.5);
+    border-radius: 50%;
+    display: inline-block;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+.carousel-dot.active {
+    background-color: #1e90ff;
+}
+</style>
+
 <div class="car-detail">
-    <img src="{{ url_for('static', filename='images/' + car.image) }}" alt="Car Image">
-    <div class="details">
+    <!-- Carousel for multiple images with fallback -->
+    <div class="carousel">
+        {% if car.images and car.images|length > 0 %}
+            {% for img in car.images %}
+                <div class="carousel-item">
+                    <img src="{{ url_for('static', filename='images/' + img.image) }}" alt="{{ car.brand }} {{ car.model }} image">
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="carousel-item">
+                <img src="{{ url_for('static', filename='images/' + car.image) }}" alt="{{ car.brand }} {{ car.model }} image">
+            </div>
+        {% endif %}
+
+        {% if (car.images and car.images|length > 1) %}
+        <div class="carousel-controls">
+            <button id="prev">&#10094;</button>
+            <button id="next">&#10095;</button>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Dot Indicators -->
+    <div class="carousel-dots" id="carouselDots"></div>
+
+    <!-- Main car details -->
+    <div class="details" style="margin-top: 20px;">
         <h2>{{ car.brand }} {{ car.model }}</h2>
         <p><strong>Mileage:</strong> {{ car.mileage }}</p>
         <p><strong>Year:</strong> {{ car.year }}</p>
@@ -13,8 +97,9 @@
     </div>
 </div>
 
+<!-- Bookmark Section -->
 {% if session.get('user_id') %}
-    <form action="{{ url_for('bookmark', car_id=car.id) }}" method="post">
+    <form action="{{ url_for('bookmark', car_id=car.id) }}" method="post" style="margin-top: 15px;">
         <button type="submit" class="custom-btn">
             {% if car in session.get('bookmarked_ids', []) %}
                 ❤️ Bookmarked
@@ -24,9 +109,63 @@
         </button>
     </form>
 {% else %}
-    <div class="login-bookmark-container">
+    <div class="login-bookmark-container" style="margin-top: 15px;">
         <a href="{{ url_for('login') }}" class="custom-btn">Login to Bookmark</a>
     </div>
 {% endif %}
 
+<script>
+let currentIndex = 0;
+const items = document.querySelectorAll('.carousel-item');
+const totalItems = items.length;
+const dotsContainer = document.getElementById('carouselDots');
+
+function createDots() {
+    for (let i = 0; i < totalItems; i++) {
+        const dot = document.createElement('span');
+        dot.classList.add('carousel-dot');
+        dot.addEventListener('click', () => {
+            currentIndex = i;
+            showItem(currentIndex);
+        });
+        dotsContainer.appendChild(dot);
+    }
+}
+
+function updateDots() {
+    const dots = document.querySelectorAll('.carousel-dot');
+    dots.forEach((dot, i) => {
+        dot.classList.toggle('active', i === currentIndex);
+    });
+}
+
+function showItem(index) {
+    items.forEach((item, i) => {
+        item.style.display = i === index ? 'block' : 'none';
+    });
+    updateDots();
+}
+
+if (totalItems > 0) {
+    createDots();
+    showItem(currentIndex);
+}
+
+if (totalItems > 1) {
+    document.getElementById('next').addEventListener('click', () => {
+        currentIndex = (currentIndex + 1) % totalItems;
+        showItem(currentIndex);
+    });
+
+    document.getElementById('prev').addEventListener('click', () => {
+        currentIndex = (currentIndex - 1 + totalItems) % totalItems;
+        showItem(currentIndex);
+    });
+
+    setInterval(() => {
+        currentIndex = (currentIndex + 1) % totalItems;
+        showItem(currentIndex);
+    }, 5000);
+}
+</script>
 {% endblock %}

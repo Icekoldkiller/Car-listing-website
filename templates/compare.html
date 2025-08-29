@@ -1,0 +1,36 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<h1 class="title">Car Comparison</h1>
+
+{% if cars %}
+    <div style="overflow-x:auto;">
+        <table border="1" cellpadding="10" style="border-collapse:collapse; width:100%; text-align:center; background:rgba(0,0,0,0.7); color:white;">
+            <thead>
+                <tr>
+                    <th>Feature</th>
+                    {% for car in cars %}
+                        <th>{{ car.brand }} {{ car.model }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Image</td>
+                    {% for car in cars %}
+                        <td><img src="{{ url_for('static', filename='images/' + (car.image if car.image else 'placeholder.jpg')) }}" width="150"></td>
+                    {% endfor %}
+                </tr>
+                <tr><td>Price</td>{% for car in cars %}<td>${{ car.price }}</td>{% endfor %}</tr>
+                <tr><td>Mileage</td>{% for car in cars %}<td>{{ car.mileage }} km</td>{% endfor %}</tr>
+                <tr><td>Year</td>{% for car in cars %}<td>{{ car.year }}</td>{% endfor %}</tr>
+                <tr><td>Condition</td>{% for car in cars %}<td>{{ car.condition }}</td>{% endfor %}</tr>
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <p style="color:white;">No cars selected for comparison.</p>
+{% endif %}
+
+<a href="{{ url_for('index') }}" class="custom-btn" style="margin-top:20px; display:inline-block;">Back to Cars</a>
+{% endblock %}

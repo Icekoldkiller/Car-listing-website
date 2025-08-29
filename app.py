@@ -87,32 +87,39 @@ class CartItem(db.Model):
 
 @app.route('/')
 def index():
-    page = request.args.get('page', 1, type=int)  # get current page (default = 1)
+    page = request.args.get('page', 1, type=int)
     search = request.args.get('search', '')
     brand = request.args.get('brand', '')
+    sort = request.args.get('sort', '')  # ✅ NEW: Sorting option
 
     query = Car.query
 
+    # 🔍 Search filter
     if search:
         query = query.filter(Car.model.ilike(f'%{search}%'))
+
+    # 🔍 Brand filter
     if brand:
         query = query.filter(Car.brand == brand)
 
-    # ✅ Paginate: 8 cars per page
+    # 🔽 Sorting logic
+    if sort == 'price_asc':
+        query = query.order_by(Car.price.asc())
+    elif sort == 'price_desc':
+        query = query.order_by(Car.price.desc())
+    elif sort == 'year_asc':
+        query = query.order_by(Car.year.asc())
+    elif sort == 'year_desc':
+        query = query.order_by(Car.year.desc())
+
+    # 📄 Paginate results
     cars = query.paginate(page=page, per_page=8)
 
-    # ✅ Unique brands for dropdown (sorted alphabetically)
+    # 🔽 Get brands for dropdown (alphabetical order)
     brands = db.session.query(Car.brand).distinct().order_by(Car.brand.asc()).all()
     brands = [b[0] for b in brands]
 
-    return render_template(
-        "index.html",
-        cars=cars,
-        brands=brands
-    )
-
-
-
+    return render_template("index.html", cars=cars, brands=brands)
 
 @app.route('/add', methods=['GET', 'POST'])
 def add_car():
@@ -691,6 +698,17 @@ def admin_delete_user(user_id):
 
     flash(f"User '{user.username}' and all related data have been deleted.", "success")
     return redirect(url_for('admin_users'))
+
+@app.route('/compare', methods=['POST'])
+def compare():
+    selected_ids = request.form.getlist('selected_cars')
+    if not selected_ids:
+        flash("Please select cars to compare.", "warning")
+        return redirect(url_for('index'))
+    
+    cars = Car.query.filter(Car.id.in_(selected_ids)).all()
+    return render_template('compare.html',cars=cars)
+
 
 
 if __name__ == '__main__':

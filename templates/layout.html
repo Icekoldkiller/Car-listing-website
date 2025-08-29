@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Car Shop</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
         .navbar {
-            background: rgba(20, 20, 20, 0.7); /* 🔑 semi-transparent */
-            backdrop-filter: blur(10px);       /* 🔑 glass blur */
+            background: rgba(20, 20, 20, 0.7);
+            backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
             color: white;
             padding: 10px 20px;
@@ -15,21 +15,19 @@
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             z-index: 1000;
             box-shadow: 0px 2px 10px rgba(0,0,0,0.6);
-
             box-sizing: border-box;
-            padding-right: 40px; /* ✅ room for scrollbar */
+            padding-right: 40px;
         }
 
         body {
             margin: 0;
-            padding-top: 70px; /* Prevents content from hiding */
+            padding-top: 70px;
             background-color: #000;
             color: white;
             font-family: Arial, sans-serif;
@@ -58,13 +56,13 @@
             margin-left: 10px;
             border-radius: 5px;
             border: 1px solid #444;
-            background: rgba(40,40,40,0.8); /* ✅ dark glass */
+            background: rgba(40,40,40,0.8);
             color: white;
             outline: none;
         }
 
         .nav-right form select option {
-            background: #222; /* ✅ dark dropdown menu */
+            background: #222;
             color: white;
         }
 
@@ -166,6 +164,7 @@
     <!-- Right side -->
     <div class="nav-right">
         <form action="{{ url_for('index') }}" method="get" style="display: flex; align-items: center;">
+            <!-- Brand Dropdown -->
             <select name="brand" onchange="this.form.submit()" class="dropbtn">
                 <option value="">All Brands</option>
                 {% for brand in brands %}
@@ -173,8 +172,19 @@
                 {% endfor %}
             </select>
 
+            <!-- Search Box -->
             <input type="text" name="search" placeholder="Search cars..." value="{{ request.args.get('search', '') }}">
-             <button type="submit">Search</button>
+
+            <!-- 🔽 Sorting Dropdown -->
+            <select name="sort" onchange="this.form.submit()" class="dropbtn">
+                <option value="">Sort By</option>
+                <option value="price_asc" {% if request.args.get('sort') == 'price_asc' %}selected{% endif %}>Price: Low to High</option>
+                <option value="price_desc" {% if request.args.get('sort') == 'price_desc' %}selected{% endif %}>Price: High to Low</option>
+                <option value="year_asc" {% if request.args.get('sort') == 'year_asc' %}selected{% endif %}>Year: Old to New</option>
+                <option value="year_desc" {% if request.args.get('sort') == 'year_desc' %}selected{% endif %}>Year: New to Old</option>
+            </select>
+
+            <button type="submit">Search</button>
         </form>
 
         {% if session.get('username') %}
