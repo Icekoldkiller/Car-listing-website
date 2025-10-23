@@ -4,6 +4,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Car Shop</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+
     <style>
         .navbar {
             background: rgba(20, 20, 20, 0.7);
@@ -175,7 +177,7 @@
             <!-- Search Box -->
             <input type="text" name="search" placeholder="Search cars..." value="{{ request.args.get('search', '') }}">
 
-            <!-- 🔽 Sorting Dropdown -->
+            <!-- Sorting Dropdown -->
             <select name="sort" onchange="this.form.submit()" class="dropbtn">
                 <option value="">Sort By</option>
                 <option value="price_asc" {% if request.args.get('sort') == 'price_asc' %}selected{% endif %}>Price: Low to High</option>
