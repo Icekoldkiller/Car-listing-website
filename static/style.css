@@ -642,3 +642,67 @@ button.remove-btn:hover,
         text-align: left;
     }
 }
+
+/* ===== Mobile Navbar & Layout Fixes ===== */
+@media (max-width: 768px) {
+
+    .navbar {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px;
+    }
+
+    .nav-left,
+    .nav-right {
+        width: 100%;
+    }
+
+    .filter-form,
+    .nav-right form {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        gap: 10px;
+    }
+
+    .search-input,
+    .brand-dropdown,
+    .filter-btn,
+    .filter-form input,
+    .filter-form select,
+    .filter-form button {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .navbar a {
+        display: block;
+        width: 100%;
+        text-align: left;
+    }
+
+    .car-detail {
+        flex-direction: column;
+    }
+
+    .car-detail img {
+        width: 100%;
+        max-width: 100%;
+        height: auto;
+    }
+
+    .cart-item {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .cart-item img {
+        width: 100%;
+        max-width: 250px;
+    }
+
+    table {
+        display: block;
+        overflow-x: auto;
+    }
+}
